@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/transport_ops_test
+    username: test_user
+    password: test_password
+
+logging:
+  level:
+    com.school.transport: DEBUG
+    org.springframework.test: INFO
