@@ -1,0 +1,26 @@
+# Frontend sample - reference implementation (keep locally, don't commit)
+frontend-sample/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env.local
+.env.*.local
+
+prd_content.txt
+sop_content.txt
