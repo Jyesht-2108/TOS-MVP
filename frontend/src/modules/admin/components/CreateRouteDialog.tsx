@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { routesService } from '@/services/routes.service';
-import { CreateRouteRequest, RouteStatus, RouteResponse } from '@/types';
+import { RouteStatus, RouteResponse } from '@/types';
 import { toast } from 'sonner';
 
 // Zod validation schema

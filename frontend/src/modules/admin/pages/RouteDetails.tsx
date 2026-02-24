@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Edit,
@@ -24,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatedPage } from '@/components/AnimatedPage';
 import { routesService } from '@/services/routes.service';
 import { RouteResponse, RouteStudent, RouteDriverAssignment } from '@/types';
 import { toast } from 'sonner';
@@ -142,20 +144,26 @@ export const RouteDetails: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/admin/routes')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {isLoadingRoute ? (
-                <Skeleton className="h-9 w-64" />
-              ) : (
-                route?.name
+    <AnimatedPage>
+      <div className="space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/admin/routes')} className="touch-target">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                {isLoadingRoute ? (
+                  <Skeleton className="h-9 w-64" />
+                ) : (
+                  route?.name
               )}
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -175,7 +183,7 @@ export const RouteDetails: React.FC = () => {
             </Button>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Route Information Card */}
       <Card>
@@ -299,48 +307,67 @@ export const RouteDetails: React.FC = () => {
               ))}
             </div>
           ) : students && students.length > 0 ? (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="min-w-[150px]">Name</TableHead>
+                    <TableHead className="min-w-[100px]">Status</TableHead>
+                    <TableHead className="min-w-[120px]">Attendance</TableHead>
+                    <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((routeStudent) => (
-                    <TableRow key={routeStudent.studentId}>
-                      <TableCell className="font-medium">
-                        {routeStudent.student?.name || 'Unknown Student'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={getStatusBadgeVariant(
-                            routeStudent.student?.status || 'ACTIVE'
-                          )}
-                        >
-                          {routeStudent.student?.status || 'ACTIVE'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleRemoveStudent(
-                              routeStudent.studentId,
-                              routeStudent.student?.name || 'this student'
-                            )
-                          }
-                          disabled={removeStudentMutation.isPending}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {students.map((routeStudent) => {
+                    const attendancePresent = routeStudent.attendancePresent ?? 0;
+                    const attendanceTotal = routeStudent.attendanceTotal ?? 0;
+                    const attendancePercentage = attendanceTotal > 0 
+                      ? Math.round((attendancePresent / attendanceTotal) * 100) 
+                      : 0;
+                    
+                    return (
+                      <TableRow key={routeStudent.studentId}>
+                        <TableCell className="font-medium">
+                          {routeStudent.student?.name || 'Unknown Student'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getStatusBadgeVariant(
+                              routeStudent.student?.status || 'ACTIVE'
+                            )}
+                          >
+                            {routeStudent.student?.status || 'ACTIVE'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {attendancePresent}/{attendanceTotal}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ({attendancePercentage}%)
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleRemoveStudent(
+                                routeStudent.studentId,
+                                routeStudent.student?.name || 'this student'
+                              )
+                            }
+                            disabled={removeStudentMutation.isPending}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -389,6 +416,7 @@ export const RouteDetails: React.FC = () => {
           route={route}
         />
       )}
-    </div>
+      </div>
+    </AnimatedPage>
   );
 };

@@ -63,6 +63,8 @@ export interface RouteStudent {
   routeId: string;
   studentId: string;
   student?: Student;
+  attendancePresent?: number;
+  attendanceTotal?: number;
 }
 
 export interface RouteDriverAssignment {
@@ -97,4 +99,27 @@ export interface RecentActivity {
   timestamp: string;
   userId?: string;
   userName?: string;
+}
+
+// Parent Dashboard Types
+export interface ParentDashboardStats {
+  myChildren: number;
+  activeRoutes: number;
+  upcomingTrips: number;
+}
+
+export interface ChildTransportInfo {
+  id: string;
+  name: string;
+  grade?: string;
+  routeId?: string;
+  routeName?: string;
+  routeStatus?: RouteStatus;
+  driverName?: string;
+  driverPhone?: string;
+  vehicleNumber?: string;
+  pickupTime?: string;
+  dropoffTime?: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
 }

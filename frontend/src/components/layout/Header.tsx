@@ -25,16 +25,16 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-      <SidebarTrigger />
+    <header className="sticky top-0 z-10 flex h-14 md:h-16 items-center gap-2 md:gap-4 border-b bg-background px-4 md:px-6">
+      <SidebarTrigger className="touch-target" />
       
       <div className="flex-1" />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar>
-              <AvatarFallback className="bg-primary text-primary-foreground">
+          <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full touch-target">
+            <Avatar className="h-9 w-9 md:h-10 md:w-10">
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                 {user ? getInitials(user.name) : 'U'}
               </AvatarFallback>
             </Avatar>
@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout} className="cursor-pointer">
+          <DropdownMenuItem onClick={logout} className="cursor-pointer touch-target">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>

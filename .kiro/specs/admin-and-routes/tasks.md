@@ -154,7 +154,7 @@
   - Style with shadcn/ui Dialog, Checkbox, ScrollArea components
   - _Requirements: 3.1, 3.2_
 
-- [ ] 14. Create parent dashboard page
+- [x] 14. Create parent dashboard page
   - Create ParentDashboard page component
   - Add welcome header with parent name
   - Create stat cards: My Children, Active Routes, Upcoming Trips
@@ -166,7 +166,7 @@
   - Integrate with React Query for data fetching
   - _Requirements: 5.1, 5.5_
 
-- [ ] 15. Create parent children list page
+- [x] 15. Create parent children list page
   - Create MyChildren page component in parent module
   - Display list of parent's children in card grid layout
   - Show child name, grade, assigned route, status on each card
@@ -177,7 +177,7 @@
   - Add loading skeleton
   - _Requirements: 5.1, 5.3_
 
-- [ ] 16. Create parent transport details page
+- [x] 16. Create parent transport details page
   - Create TransportDetails page component
   - Display child information: Name, Grade, Section
   - Show assigned route information: Route Name, Driver Name, Vehicle Number
@@ -189,7 +189,7 @@
   - Use shadcn/ui Card, Table components
   - _Requirements: 5.2, 5.4, 5.5_
 
-- [ ] 17. Add global error handling and loading states
+- [x] 17. Add global error handling and loading states
   - Create ErrorBoundary component for catching React errors
   - Create LoadingSpinner component for loading states
   - Create EmptyState component for no data scenarios
@@ -199,7 +199,7 @@
   - Style error states with appropriate messaging and actions
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 18. Implement responsive design and animations
+- [x] 18. Implement responsive design and animations
   - Ensure all pages are responsive (mobile, tablet, desktop)
   - Add Framer Motion animations for page transitions
   - Add hover effects on cards and buttons

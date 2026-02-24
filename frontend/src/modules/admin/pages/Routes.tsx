@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Plus, 
   Search, 
@@ -39,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatedPage } from '@/components/AnimatedPage';
 import { routesService } from '@/services/routes.service';
 import { RouteResponse, RouteStatus } from '@/types';
 import { toast } from 'sonner';
@@ -122,20 +124,26 @@ export const Routes: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Routes</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage transport routes and assignments
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Route
-        </Button>
-      </div>
+    <AnimatedPage>
+      <div className="space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        >
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Routes</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              Manage transport routes and assignments
+            </p>
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="w-full sm:w-auto touch-target">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Route
+          </Button>
+        </motion.div>
 
       {/* Filters and Search */}
       <Card>
@@ -146,7 +154,7 @@ export const Routes: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6">
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -154,7 +162,7 @@ export const Routes: React.FC = () => {
                 placeholder="Search routes by name or driver..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 touch-target"
               />
             </div>
 
@@ -163,7 +171,7 @@ export const Routes: React.FC = () => {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as 'ALL' | RouteStatus)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] touch-target">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -208,15 +216,15 @@ export const Routes: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Route Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Driver</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="min-w-[150px]">Route Name</TableHead>
+                    <TableHead className="min-w-[100px]">Status</TableHead>
+                    <TableHead className="min-w-[150px]">Driver</TableHead>
+                    <TableHead className="min-w-[100px]">Students</TableHead>
+                    <TableHead className="text-right min-w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -319,6 +327,7 @@ export const Routes: React.FC = () => {
           routeId={selectedRoute.id}
         />
       )}
-    </div>
+      </div>
+    </AnimatedPage>
   );
 };

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,16 +68,32 @@ export const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-2">
-            <Bus className="w-10 h-10 text-primary-foreground" />
-          </div>
-          <CardTitle className="text-3xl font-bold">Transport Operations</CardTitle>
-          <CardDescription className="text-base">
-            Sign in to access the system
-          </CardDescription>
-        </CardHeader>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="space-y-3 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-2"
+            >
+              <Bus className="w-10 h-10 text-primary-foreground" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <CardTitle className="text-3xl font-bold">Transport Operations</CardTitle>
+              <CardDescription className="text-base">
+                Sign in to access the system
+              </CardDescription>
+            </motion.div>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -144,7 +161,8 @@ export const Login: React.FC = () => {
             </div>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
     </div>
   );
 };

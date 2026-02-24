@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { 
   Users, 
   Route as RouteIcon, 
@@ -13,6 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatedPage } from '@/components/AnimatedPage';
 import { useAuthStore } from '@/stores/authStore';
 import { adminService } from '@/services/admin.service';
 import { DashboardStats, RecentActivity } from '@/types';
@@ -26,18 +28,25 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon, description }) => {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="h-4 w-4 text-muted-foreground">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </CardContent>
-    </Card>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    >
+      <Card className="cursor-default">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <div className="h-4 w-4 text-muted-foreground">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{value}</div>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
@@ -113,16 +122,21 @@ export const AdminDashboard: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, {user?.name || 'Admin'}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Here's what's happening with your transport operations today.
-        </p>
-      </div>
+    <AnimatedPage>
+      <div className="space-y-6">
+        {/* Welcome Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Welcome back, {user?.name || 'Admin'}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
+            Here's what's happening with your transport operations today.
+          </p>
+        </motion.div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -241,6 +255,7 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </AnimatedPage>
   );
 };

@@ -39,6 +39,7 @@ export const setupMockApi = (api: AxiosInstance) => {
             headers: {},
             config,
           },
+          __isMockResponse: true, // Add marker for mock responses
         });
       }
 
@@ -57,6 +58,7 @@ export const setupMockApi = (api: AxiosInstance) => {
               headers: {},
               config,
             },
+            __isMockResponse: true,
           });
         } else {
           return Promise.reject({
@@ -68,6 +70,7 @@ export const setupMockApi = (api: AxiosInstance) => {
               headers: {},
               config,
             },
+            __isMockResponse: true,
           });
         }
       }
@@ -78,6 +81,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         const students = getMockRouteStudents(routeId);
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: students,
@@ -95,6 +99,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         const assignments = getMockDriverAssignments(routeId);
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: assignments,
@@ -118,6 +123,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         }
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: {},
@@ -143,6 +149,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         mockRoutes.push(newRoute);
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: newRoute,
@@ -162,6 +169,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         if (index !== -1) {
           mockRoutes.splice(index, 1);
           return Promise.reject({
+            __isMockResponse: true,
             config,
             response: {
               data: {},
@@ -187,6 +195,7 @@ export const setupMockApi = (api: AxiosInstance) => {
           };
 
           return Promise.reject({
+            __isMockResponse: true,
             config,
             response: {
               data: mockRoutes[routeIndex],
@@ -204,13 +213,15 @@ export const setupMockApi = (api: AxiosInstance) => {
         const routeId = url.split('/')[2];
         const { studentIds } = config.data;
 
-        // Update mock data
+        // Update mock data with attendance information
         mockRouteStudents[routeId] = studentIds.map((studentId: string) => {
           const student = mockStudents.find((s) => s.id === studentId);
           return {
             routeId,
             studentId,
             student,
+            attendancePresent: Math.floor(Math.random() * 5) + 18, // Random between 18-22
+            attendanceTotal: 22,
           };
         });
 
@@ -221,6 +232,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         }
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: mockRouteStudents[routeId],
@@ -268,6 +280,7 @@ export const setupMockApi = (api: AxiosInstance) => {
         }
 
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: newAssignment,
@@ -282,6 +295,7 @@ export const setupMockApi = (api: AxiosInstance) => {
       // Mock GET /admin/drivers
       if (method === 'get' && url === '/admin/drivers') {
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: mockDrivers,
@@ -296,6 +310,7 @@ export const setupMockApi = (api: AxiosInstance) => {
       // Mock GET /admin/students
       if (method === 'get' && url === '/admin/students') {
         return Promise.reject({
+          __isMockResponse: true,
           config,
           response: {
             data: mockStudents,
@@ -305,6 +320,129 @@ export const setupMockApi = (api: AxiosInstance) => {
             config,
           },
         });
+      }
+
+      // Mock GET /parent/dashboard/stats
+      if (method === 'get' && url === '/parent/dashboard/stats') {
+        const parentStats = {
+          myChildren: 2,
+          activeRoutes: 2,
+          upcomingTrips: 4,
+        };
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: parentStats,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /parent/children
+      if (method === 'get' && url === '/parent/children') {
+        const childrenTransport = [
+          {
+            id: 'student-1',
+            name: 'Emma Johnson',
+            grade: 'Grade 5',
+            routeId: 'route-1',
+            routeName: 'North District Route',
+            routeStatus: 'ACTIVE',
+            driverName: 'John Anderson',
+            pickupTime: '07:30 AM',
+            dropoffTime: '03:45 PM',
+            pickupLocation: '123 Oak Street',
+            dropoffLocation: 'Main School Building',
+          },
+          {
+            id: 'student-7',
+            name: 'James Johnson',
+            grade: 'Grade 3',
+            routeId: 'route-2',
+            routeName: 'South District Route',
+            routeStatus: 'ACTIVE',
+            driverName: 'Sarah Thompson',
+            pickupTime: '07:45 AM',
+            dropoffTime: '04:00 PM',
+            pickupLocation: '123 Oak Street',
+            dropoffLocation: 'Elementary Building',
+          },
+        ];
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: childrenTransport,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /parent/children/:childId
+      if (method === 'get' && url?.match(/^\/parent\/children\/[^/]+$/)) {
+        const childId = url.split('/')[3];
+        const childrenTransport = [
+          {
+            id: 'student-1',
+            name: 'Emma Johnson',
+            grade: 'Grade 5',
+            routeId: 'route-1',
+            routeName: 'North District Route',
+            routeStatus: 'ACTIVE',
+            driverName: 'John Anderson',
+            pickupTime: '07:30 AM',
+            dropoffTime: '03:45 PM',
+            pickupLocation: '123 Oak Street',
+            dropoffLocation: 'Main School Building',
+          },
+          {
+            id: 'student-7',
+            name: 'James Johnson',
+            grade: 'Grade 3',
+            routeId: 'route-2',
+            routeName: 'South District Route',
+            routeStatus: 'ACTIVE',
+            driverName: 'Sarah Thompson',
+            pickupTime: '07:45 AM',
+            dropoffTime: '04:00 PM',
+            pickupLocation: '123 Oak Street',
+            dropoffLocation: 'Elementary Building',
+          },
+        ];
+        const child = childrenTransport.find(c => c.id === childId);
+        
+        if (child) {
+          return Promise.reject({
+            __isMockResponse: true,
+            config,
+            response: {
+              data: child,
+              status: 200,
+              statusText: 'OK',
+              headers: {},
+              config,
+            },
+          });
+        } else {
+          return Promise.reject({
+            __isMockResponse: true,
+            config,
+            response: {
+              data: { message: 'Child not found' },
+              status: 404,
+              statusText: 'Not Found',
+              headers: {},
+              config,
+            },
+          });
+        }
       }
 
       // If no mock matches, let the request proceed normally
