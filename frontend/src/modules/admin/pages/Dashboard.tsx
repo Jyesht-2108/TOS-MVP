@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -9,7 +10,8 @@ import {
   Plus,
   UserPlus,
   FileText,
-  Clock
+  Clock,
+  Navigation as NavigationIcon
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,8 @@ import { AnimatedPage } from '@/components/AnimatedPage';
 import { useAuthStore } from '@/stores/authStore';
 import { adminService } from '@/services/admin.service';
 import { DashboardStats, RecentActivity } from '@/types';
+import { CreateRouteDialog } from '../components/CreateRouteDialog';
+import { toast } from 'sonner';
 
 interface StatCardProps {
   title: string;
@@ -98,6 +102,8 @@ const formatTimestamp = (timestamp: string): string => {
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const [isCreateRouteDialogOpen, setIsCreateRouteDialogOpen] = useState(false);
 
   // Fetch dashboard stats
   const { 
@@ -120,6 +126,19 @@ export const AdminDashboard: React.FC = () => {
     queryFn: () => adminService.fetchRecentActivity(5),
     refetchInterval: 30000,
   });
+
+  const handleCreateRoute = () => {
+    setIsCreateRouteDialogOpen(true);
+  };
+
+  const handleAssignDriver = () => {
+    navigate('/admin/routes');
+    toast.info('Select a route to assign a driver');
+  };
+
+  const handleViewReports = () => {
+    navigate('/admin/live-monitoring');
+  };
 
   return (
     <AnimatedPage>
@@ -240,21 +259,39 @@ export const AdminDashboard: React.FC = () => {
             <CardDescription>Common tasks and operations</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={handleCreateRoute}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create New Route
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={handleAssignDriver}
+            >
               <UserPlus className="mr-2 h-4 w-4" />
               Assign Driver
             </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <FileText className="mr-2 h-4 w-4" />
-              View Reports
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={handleViewReports}
+            >
+              <NavigationIcon className="mr-2 h-4 w-4" />
+              Live Monitoring
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Create Route Dialog */}
+      <CreateRouteDialog
+        open={isCreateRouteDialogOpen}
+        onOpenChange={setIsCreateRouteDialogOpen}
+      />
       </div>
     </AnimatedPage>
   );

@@ -153,3 +153,46 @@ export interface LiveRouteTracking {
   lastUpdated: string;
   estimatedArrival?: string;
 }
+
+// Admin Live Monitoring Types
+export interface TripAttendance {
+  studentId: string;
+  studentName: string;
+  status: 'PRESENT' | 'ABSENT' | 'PENDING';
+  pickupTime?: string;
+  pickupLocation?: string;
+}
+
+export interface ActiveTrip {
+  tripId: string;
+  routeId: string;
+  routeName: string;
+  vehicleNumber?: string;
+  driverId: string;
+  driverName: string;
+  driverPhone?: string;
+  tripType: 'MORNING' | 'EVENING';
+  startTime: string;
+  endTime?: string;
+  currentLocation?: BusLocation;
+  lastGPSPing: string;
+  gpsHealthStatus: 'HEALTHY' | 'WARNING' | 'STALE';
+  totalStudents: number;
+  presentStudents: number;
+  absentStudents: number;
+  pendingStudents: number;
+  attendance: TripAttendance[];
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+}
+
+export interface DriverActivity {
+  driverId: string;
+  driverName: string;
+  vehicleNumber?: string;
+  currentTripId?: string;
+  lastTripStartTime?: string;
+  lastTripEndTime?: string;
+  lastGPSTimestamp?: string;
+  totalTripsToday: number;
+  status: 'ACTIVE' | 'IDLE' | 'OFFLINE';
+}

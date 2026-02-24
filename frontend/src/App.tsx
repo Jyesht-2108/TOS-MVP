@@ -15,6 +15,8 @@ import { Routes as AdminRoutes } from '@/modules/admin/pages/Routes';
 import { RouteDetails } from '@/modules/admin/pages/RouteDetails';
 import { Drivers } from '@/modules/admin/pages/Drivers';
 import { Students } from '@/modules/admin/pages/Students';
+import { LiveMonitoring } from '@/modules/admin/pages/LiveMonitoring';
+import { TripDetails } from '@/modules/admin/pages/TripDetails';
 import { ParentDashboard } from '@/modules/parent/pages/Dashboard';
 import { MyChildren } from '@/modules/parent/pages/MyChildren';
 import { TransportDetails } from '@/modules/parent/pages/TransportDetails';
@@ -75,6 +77,8 @@ function AnimatedRoutes() {
           <Route path="/admin/routes/:routeId" element={<RouteDetails />} />
           <Route path="/admin/drivers" element={<Drivers />} />
           <Route path="/admin/students" element={<Students />} />
+          <Route path="/admin/live-monitoring" element={<LiveMonitoring />} />
+          <Route path="/admin/trips/:tripId" element={<TripDetails />} />
         </Route>
 
         {/* Parent Routes */}

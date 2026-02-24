@@ -376,3 +376,92 @@ export const getMockLiveTracking = (): import('@/types').LiveRouteTracking[] => 
       };
     });
 };
+
+// Helper function to generate mock active trips for admin monitoring
+export const getMockActiveTrips = (): import('@/types').ActiveTrip[] => {
+  const now = new Date();
+  const trips: import('@/types').ActiveTrip[] = [];
+
+  mockRoutes
+    .filter(route => route.status === 'ACTIVE')
+    .forEach((route, index) => {
+      const driverAssignment = mockDriverAssignments[route.id]?.[0];
+      const driver = driverAssignment?.driver;
+      const routeStudents = mockRouteStudents[route.id] || [];
+
+      if (!driver) return;
+
+      // Generate GPS health status based on last ping
+      const lastPingSeconds = Math.floor(Math.random() * 120); // Random 0-120 seconds
+      let gpsHealthStatus: 'HEALTHY' | 'WARNING' | 'STALE';
+      if (lastPingSeconds < 30) gpsHealthStatus = 'HEALTHY';
+      else if (lastPingSeconds < 90) gpsHealthStatus = 'WARNING';
+      else gpsHealthStatus = 'STALE';
+
+      const lastGPSPing = new Date(now.getTime() - lastPingSeconds * 1000).toISOString();
+
+      // Generate attendance data
+      const attendance: import('@/types').TripAttendance[] = routeStudents.map(rs => ({
+        studentId: rs.studentId,
+        studentName: rs.student?.name || 'Unknown',
+        status: Math.random() > 0.2 ? 'PRESENT' : (Math.random() > 0.5 ? 'ABSENT' : 'PENDING'),
+        pickupTime: '07:30 AM',
+        pickupLocation: `${rs.student?.name}'s Home`,
+      }));
+
+      const presentStudents = attendance.filter(a => a.status === 'PRESENT').length;
+      const absentStudents = attendance.filter(a => a.status === 'ABSENT').length;
+      const pendingStudents = attendance.filter(a => a.status === 'PENDING').length;
+
+      trips.push({
+        tripId: `trip-${route.id}-morning`,
+        routeId: route.id,
+        routeName: route.name,
+        vehicleNumber: driver.vehicleNumber,
+        driverId: driver.id,
+        driverName: driver.name,
+        driverPhone: driver.phone,
+        tripType: 'MORNING',
+        startTime: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // Started 30 mins ago
+        currentLocation: {
+          latitude: 40.7128 + (index * 0.05),
+          longitude: -74.0060 + (index * 0.05),
+          timestamp: lastGPSPing,
+          speed: 25 + (index * 5),
+          heading: 90 + (index * 45),
+        },
+        lastGPSPing,
+        gpsHealthStatus,
+        totalStudents: routeStudents.length,
+        presentStudents,
+        absentStudents,
+        pendingStudents,
+        attendance,
+        status: 'ACTIVE',
+      });
+    });
+
+  return trips;
+};
+
+// Helper function to generate mock driver activity
+export const getMockDriverActivity = (): import('@/types').DriverActivity[] => {
+  const now = new Date();
+  
+  return mockDrivers.map((driver, index) => {
+    const hasActiveTrip = driver.routeId && mockRoutes.find(r => r.id === driver.routeId)?.status === 'ACTIVE';
+    const lastGPSSeconds = Math.floor(Math.random() * 180); // Random 0-180 seconds
+    
+    return {
+      driverId: driver.id,
+      driverName: driver.name,
+      vehicleNumber: driver.vehicleNumber,
+      currentTripId: hasActiveTrip ? `trip-${driver.routeId}-morning` : undefined,
+      lastTripStartTime: hasActiveTrip ? new Date(now.getTime() - 30 * 60 * 1000).toISOString() : undefined,
+      lastTripEndTime: !hasActiveTrip && index % 2 === 0 ? new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() : undefined,
+      lastGPSTimestamp: hasActiveTrip ? new Date(now.getTime() - lastGPSSeconds * 1000).toISOString() : undefined,
+      totalTripsToday: hasActiveTrip ? 1 : (index % 3),
+      status: hasActiveTrip ? 'ACTIVE' : (driver.status === 'ACTIVE' ? 'IDLE' : 'OFFLINE'),
+    };
+  });
+};

@@ -6,6 +6,7 @@ import {
   Truck,
   Users,
   Info,
+  Navigation,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -31,6 +32,11 @@ const adminNavItems: NavItem[] = [
     title: 'Dashboard',
     href: '/admin/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Live Monitoring',
+    href: '/admin/live-monitoring',
+    icon: Navigation,
   },
   {
     title: 'Routes',

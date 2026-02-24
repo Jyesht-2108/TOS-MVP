@@ -200,6 +200,75 @@ class AdminService {
       throw error;
     }
   }
+
+  /**
+   * Fetch active trips for live monitoring
+   * @returns Promise with array of active trips
+   */
+  async fetchActiveTrips(): Promise<import('@/types').ActiveTrip[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getMockActiveTrips } = await import('@/lib/mockData');
+      return getMockActiveTrips();
+    }
+
+    try {
+      const response = await api.get<import('@/types').ActiveTrip[]>('/admin/trips/active');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch active trips:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch driver activity for monitoring
+   * @returns Promise with array of driver activity
+   */
+  async fetchDriverActivity(): Promise<import('@/types').DriverActivity[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getMockDriverActivity } = await import('@/lib/mockData');
+      return getMockDriverActivity();
+    }
+
+    try {
+      const response = await api.get<import('@/types').DriverActivity[]>('/admin/drivers/activity');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch driver activity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch trip details by trip ID
+   * @param tripId - The trip ID
+   * @returns Promise with trip details
+   */
+  async fetchTripDetails(tripId: string): Promise<import('@/types').ActiveTrip> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getMockActiveTrips } = await import('@/lib/mockData');
+      const trips = getMockActiveTrips();
+      const trip = trips.find(t => t.tripId === tripId);
+      if (!trip) {
+        throw new Error('Trip not found');
+      }
+      return trip;
+    }
+
+    try {
+      const response = await api.get<import('@/types').ActiveTrip>(`/admin/trips/${tripId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch trip details:', error);
+      throw error;
+    }
+  }
 }
 
 export const adminService = new AdminService();
