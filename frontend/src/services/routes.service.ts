@@ -8,6 +8,7 @@ import {
   RouteStudent,
   RouteDriverAssignment,
 } from '@/types';
+import { addActivity } from '@/lib/activityTracker';
 
 class RoutesService {
   /**
@@ -49,6 +50,16 @@ class RoutesService {
   async createRoute(request: CreateRouteRequest): Promise<Route> {
     try {
       const response = await api.post<Route>('/routes', request);
+      
+      // Track activity
+      const user = this.getCurrentUser();
+      addActivity(
+        'ROUTE_CREATED',
+        `New route "${request.name}" created`,
+        user?.id,
+        user?.name
+      );
+      
       return response.data;
     } catch (error) {
       console.error('Failed to create route:', error);
@@ -65,6 +76,25 @@ class RoutesService {
   async updateRoute(routeId: string, request: Partial<CreateRouteRequest>): Promise<Route> {
     try {
       const response = await api.put<Route>(`/routes/${routeId}`, request);
+      
+      // Track activity
+      const user = this.getCurrentUser();
+      if (request.name) {
+        addActivity(
+          'ROUTE_UPDATED',
+          `Route "${request.name}" updated`,
+          user?.id,
+          user?.name
+        );
+      } else if (request.status) {
+        addActivity(
+          'ROUTE_UPDATED',
+          `Route status changed to ${request.status}`,
+          user?.id,
+          user?.name
+        );
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to update route ${routeId}:`, error);
@@ -98,6 +128,17 @@ class RoutesService {
         `/routes/${routeId}/assign-driver`,
         request
       );
+      
+      // Track activity
+      const user = this.getCurrentUser();
+      const route = await this.fetchRouteById(routeId);
+      addActivity(
+        'DRIVER_ASSIGNED',
+        `Driver assigned to ${route.name}`,
+        user?.id,
+        user?.name
+      );
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to assign driver to route ${routeId}:`, error);
@@ -117,6 +158,18 @@ class RoutesService {
         `/routes/${routeId}/assign-students`,
         request
       );
+      
+      // Track activity
+      const user = this.getCurrentUser();
+      const route = await this.fetchRouteById(routeId);
+      const count = request.studentIds.length;
+      addActivity(
+        'STUDENT_ASSIGNED',
+        `${count} student${count > 1 ? 's' : ''} assigned to ${route.name}`,
+        user?.id,
+        user?.name
+      );
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to assign students to route ${routeId}:`, error);
@@ -180,6 +233,20 @@ class RoutesService {
     } catch (error) {
       console.error('Failed to fetch driver routes:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get current user from localStorage
+   * @private
+   */
+  private getCurrentUser() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
     }
   }
 }

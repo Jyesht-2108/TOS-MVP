@@ -196,3 +196,23 @@ export interface DriverActivity {
   totalTripsToday: number;
   status: 'ACTIVE' | 'IDLE' | 'OFFLINE';
 }
+
+// Audit Log Types
+export interface AttendanceAuditLog {
+  id: string;
+  tripId: string;
+  studentId: string;
+  studentName: string;
+  oldStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
+  newStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
+  reason: string;
+  editedBy: string;
+  editedByName: string;
+  editedAt: string;
+}
+
+export interface AttendanceCorrection {
+  studentId: string;
+  newStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
+  reason: string;
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Phone,
   Car,
+  Edit,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
 import { LiveMap } from '@/modules/parent/components/LiveMap';
+import { CorrectAttendanceDialog } from '../components/CorrectAttendanceDialog';
+import { AuditLogViewer } from '../components/AuditLogViewer';
 import { adminService } from '@/services/admin.service';
 import { ActiveTrip } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -33,6 +36,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 export const TripDetails: React.FC = () => {
   const { tripId } = useParams<{ tripId: string }>();
   const navigate = useNavigate();
+  const [selectedAttendance, setSelectedAttendance] = useState<import('@/types').TripAttendance | null>(null);
+  const [isCorrectDialogOpen, setIsCorrectDialogOpen] = useState(false);
 
   // Fetch trip details
   const {
@@ -45,6 +50,11 @@ export const TripDetails: React.FC = () => {
     enabled: !!tripId,
     refetchInterval: 10000, // Refresh every 10 seconds
   });
+
+  const handleCorrectAttendance = (attendance: import('@/types').TripAttendance) => {
+    setSelectedAttendance(attendance);
+    setIsCorrectDialogOpen(true);
+  };
 
   const getGPSHealthBadge = (status: ActiveTrip['gpsHealthStatus']) => {
     switch (status) {
@@ -284,6 +294,7 @@ export const TripDetails: React.FC = () => {
                         <TableHead className="min-w-[120px]">Status</TableHead>
                         <TableHead className="min-w-[120px]">Pickup Time</TableHead>
                         <TableHead className="min-w-[200px]">Pickup Location</TableHead>
+                        <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -304,6 +315,16 @@ export const TripDetails: React.FC = () => {
                               {attendance.pickupLocation || 'N/A'}
                             </span>
                           </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCorrectAttendance(attendance)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Correct
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -311,8 +332,21 @@ export const TripDetails: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Audit Log Viewer */}
+            <AuditLogViewer tripId={trip.tripId} />
           </>
         ) : null}
+
+        {/* Correct Attendance Dialog */}
+        {selectedAttendance && tripId && (
+          <CorrectAttendanceDialog
+            open={isCorrectDialogOpen}
+            onOpenChange={setIsCorrectDialogOpen}
+            tripId={tripId}
+            attendance={selectedAttendance}
+          />
+        )}
       </div>
     </AnimatedPage>
   );

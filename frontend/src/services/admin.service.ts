@@ -1,9 +1,15 @@
 import api from '@/lib/api';
 import { DashboardStats, RecentActivity, RouteResponse, Driver, Student } from '@/types';
 import { mockDrivers } from '@/lib/mockData';
+import { getRecentActivities, initializeActivities } from '@/lib/activityTracker';
 
 // Check if we should use mock data
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
+
+// Initialize activities on first load
+if (USE_MOCK) {
+  initializeActivities();
+}
 
 // Mock data for development
 const MOCK_DASHBOARD_STATS: DashboardStats = {
@@ -12,41 +18,6 @@ const MOCK_DASHBOARD_STATS: DashboardStats = {
   totalDrivers: 15,
   totalStudents: 245,
 };
-
-const MOCK_RECENT_ACTIVITY: RecentActivity[] = [
-  {
-    id: '1',
-    type: 'ROUTE_CREATED',
-    description: 'New route "Morning Route A" created',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    userId: '550e8400-e29b-41d4-a716-446655440001',
-    userName: 'Admin User',
-  },
-  {
-    id: '2',
-    type: 'DRIVER_ASSIGNED',
-    description: 'Driver John Smith assigned to Route B',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    userId: '550e8400-e29b-41d4-a716-446655440001',
-    userName: 'Admin User',
-  },
-  {
-    id: '3',
-    type: 'STUDENT_ASSIGNED',
-    description: '5 students assigned to Morning Route A',
-    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    userId: '550e8400-e29b-41d4-a716-446655440001',
-    userName: 'Admin User',
-  },
-  {
-    id: '4',
-    type: 'ROUTE_UPDATED',
-    description: 'Route "Evening Route C" status changed to Active',
-    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    userId: '550e8400-e29b-41d4-a716-446655440001',
-    userName: 'Admin User',
-  },
-];
 
 const MOCK_ROUTES: RouteResponse[] = [
   {
@@ -120,7 +91,7 @@ class AdminService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      return MOCK_RECENT_ACTIVITY.slice(0, limit);
+      return getRecentActivities(limit);
     }
 
     try {
