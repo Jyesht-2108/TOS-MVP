@@ -73,6 +73,28 @@ export const RouteDetails: React.FC = () => {
     enabled: !!routeId,
   });
 
+  // Get active driver
+  const activeDriver = driverAssignments?.find((assignment) => !assignment.activeTo);
+
+  // Fetch driver activity to check if there's an active trip
+  const {
+    data: driverActivity,
+  } = useQuery({
+    queryKey: ['driver-activity', activeDriver?.driverId],
+    queryFn: async () => {
+      if (!activeDriver?.driverId) return null;
+      // Import adminService to fetch driver activity
+      const { adminService } = await import('@/services/admin.service');
+      const activities = await adminService.fetchDriverActivity();
+      return activities.find((activity: import('@/types').DriverActivity) => activity.driverId === activeDriver.driverId);
+    },
+    enabled: !!activeDriver?.driverId,
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  // Check if driver has an active trip
+  const hasActiveTrip = driverActivity?.status === 'ACTIVE' && !!driverActivity?.currentTripId;
+
   // Remove student mutation
   const removeStudentMutation = useMutation({
     mutationFn: ({ studentId }: { studentId: string }) =>
@@ -98,8 +120,17 @@ export const RouteDetails: React.FC = () => {
   };
 
   const handleTrackLiveRoute = () => {
-    // TODO: Implement live route tracking
-    toast.info('Live route tracking feature coming soon!');
+    if (!hasActiveTrip) {
+      toast.error('Cannot track location', {
+        description: 'The bus has not left the campus yet. Tracking is only available when the driver has an active trip.',
+      });
+      return;
+    }
+
+    if (driverActivity?.currentTripId) {
+      // Navigate to trip details page with live map
+      navigate(`/admin/trips/${driverActivity.currentTripId}`);
+    }
   };
 
   const handleAssignDriver = () => {
@@ -119,9 +150,6 @@ export const RouteDetails: React.FC = () => {
   ): 'default' | 'secondary' => {
     return status === 'ACTIVE' ? 'default' : 'secondary';
   };
-
-  // Get active driver
-  const activeDriver = driverAssignments?.find((assignment) => !assignment.activeTo);
 
   if (routeError) {
     return (
@@ -173,9 +201,15 @@ export const RouteDetails: React.FC = () => {
         </div>
         {route && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleTrackLiveRoute}>
+            <Button 
+              variant="outline" 
+              onClick={handleTrackLiveRoute}
+              disabled={!hasActiveTrip}
+              title={!hasActiveTrip ? 'Tracking is only available when the driver has an active trip' : 'Track live route'}
+            >
               <Navigation className="mr-2 h-4 w-4" />
               Track Live Route
+              {!hasActiveTrip && <span className="ml-2 text-xs">(No active trip)</span>}
             </Button>
             <Button variant="outline" onClick={handleEditRoute}>
               <Edit className="mr-2 h-4 w-4" />
@@ -259,11 +293,35 @@ export const RouteDetails: React.FC = () => {
                 <p className="text-sm text-muted-foreground">
                   Assigned since {format(new Date(activeDriver.activeFrom), 'MMM dd, yyyy')}
                 </p>
+                {driverActivity && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Status: <span className={`font-medium ${
+                      driverActivity.status === 'ACTIVE' ? 'text-green-600' : 
+                      driverActivity.status === 'IDLE' ? 'text-yellow-600' : 
+                      'text-gray-600'
+                    }`}>
+                      {driverActivity.status}
+                    </span>
+                  </p>
+                )}
               </div>
-              <Button variant="outline" size="sm" onClick={handleTrackLiveRoute}>
-                <MapPin className="mr-2 h-4 w-4" />
-                Track Location
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleTrackLiveRoute}
+                  disabled={!hasActiveTrip}
+                  title={!hasActiveTrip ? 'Tracking is only available when the driver has an active trip' : 'Track live location'}
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Track Location
+                </Button>
+                {!hasActiveTrip && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    No active trip
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <div className="text-center py-8">

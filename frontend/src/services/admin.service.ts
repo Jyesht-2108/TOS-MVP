@@ -1,6 +1,5 @@
 import api from '@/lib/api';
 import { DashboardStats, RecentActivity, RouteResponse, Driver, Student } from '@/types';
-import { mockDrivers } from '@/lib/mockData';
 import { getRecentActivities, initializeActivities } from '@/lib/activityTracker';
 
 // Check if we should use mock data
@@ -11,56 +10,6 @@ if (USE_MOCK) {
   initializeActivities();
 }
 
-// Mock data for development
-const MOCK_DASHBOARD_STATS: DashboardStats = {
-  totalRoutes: 12,
-  activeRoutes: 8,
-  totalDrivers: 15,
-  totalStudents: 245,
-};
-
-const MOCK_ROUTES: RouteResponse[] = [
-  {
-    id: '1',
-    tenantId: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Morning Route A',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    driverName: 'John Smith',
-    studentCount: 25,
-  },
-  {
-    id: '2',
-    tenantId: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Morning Route B',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    driverName: 'Sarah Johnson',
-    studentCount: 30,
-  },
-  {
-    id: '3',
-    tenantId: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Evening Route A',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    driverName: 'Mike Davis',
-    studentCount: 28,
-  },
-  {
-    id: '4',
-    tenantId: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Evening Route B',
-    status: 'INACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    studentCount: 0,
-  },
-];
-
 class AdminService {
   /**
    * Fetch dashboard statistics
@@ -70,7 +19,21 @@ class AdminService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      return MOCK_DASHBOARD_STATS;
+      
+      // Calculate stats dynamically from actual mock data
+      const { mockRoutes, mockStudents, mockDrivers } = await import('@/lib/mockData');
+      
+      const totalRoutes = mockRoutes.length;
+      const activeRoutes = mockRoutes.filter(r => r.status === 'ACTIVE').length;
+      const totalDrivers = mockDrivers.length;
+      const totalStudents = mockStudents.length;
+      
+      return {
+        totalRoutes,
+        activeRoutes,
+        totalDrivers,
+        totalStudents,
+      };
     }
 
     try {
@@ -115,10 +78,13 @@ class AdminService {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
       
+      // Use actual mock routes data
+      const { mockRoutes } = await import('@/lib/mockData');
+      
       if (status) {
-        return MOCK_ROUTES.filter(route => route.status === status);
+        return mockRoutes.filter(route => route.status === status);
       }
-      return MOCK_ROUTES;
+      return mockRoutes;
     }
 
     try {
@@ -139,6 +105,7 @@ class AdminService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
+      const { mockDrivers } = await import('@/lib/mockData');
       return mockDrivers;
     }
 
