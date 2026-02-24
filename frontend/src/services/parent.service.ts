@@ -4,44 +4,6 @@ import { LiveRouteTracking, ChildTransportInfo } from '@/types';
 // Check if we should use mock data
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
 
-// Mock data for development
-const MOCK_LIVE_TRACKING: LiveRouteTracking[] = [
-  {
-    routeId: 'route-1',
-    routeName: 'North District Route',
-    vehicleNumber: 'BUS-101',
-    driverName: 'John Anderson',
-    driverPhone: '+1-555-0101',
-    currentLocation: {
-      latitude: 40.7128,
-      longitude: -74.0060,
-      timestamp: new Date().toISOString(),
-      speed: 35,
-      heading: 180,
-    },
-    tripStatus: 'ACTIVE',
-    lastUpdated: new Date().toISOString(),
-    estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-  },
-  {
-    routeId: 'route-2',
-    routeName: 'South District Route',
-    vehicleNumber: 'BUS-102',
-    driverName: 'Sarah Thompson',
-    driverPhone: '+1-555-0102',
-    currentLocation: {
-      latitude: 40.7580,
-      longitude: -73.9855,
-      timestamp: new Date().toISOString(),
-      speed: 25,
-      heading: 90,
-    },
-    tripStatus: 'ACTIVE',
-    lastUpdated: new Date().toISOString(),
-    estimatedArrival: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
-  },
-];
-
 class ParentService {
   /**
    * Fetch live tracking for parent's children routes
@@ -51,7 +13,20 @@ class ParentService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      return MOCK_LIVE_TRACKING;
+      const { getMockLiveTracking, getMockChildrenTransport } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      // Get parent's children to find their routes
+      const children = getMockChildrenTransport(parentUserId);
+      const childRouteIds = [...new Set(children.map(c => c.routeId).filter(Boolean))];
+      
+      // Filter live tracking to only show parent's children's routes
+      const allTracking = getMockLiveTracking();
+      return allTracking.filter(t => childRouteIds.includes(t.routeId));
     }
 
     try {
@@ -72,7 +47,22 @@ class ParentService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      const tracking = MOCK_LIVE_TRACKING.find(t => t.routeId === routeId);
+      const { getMockLiveTracking, getMockChildrenTransport } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      // Verify parent has access to this route
+      const children = getMockChildrenTransport(parentUserId);
+      const hasAccess = children.some(c => c.routeId === routeId);
+      
+      if (!hasAccess) {
+        throw new Error('You do not have permission to view this route');
+      }
+      
+      const tracking = getMockLiveTracking().find(t => t.routeId === routeId);
       if (!tracking) {
         throw new Error('Route tracking not found');
       }
@@ -96,8 +86,15 @@ class ParentService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      const { mockChildrenTransport } = await import('@/lib/mockData');
-      return mockChildrenTransport;
+      const { getMockChildrenTransport } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      // Filter by parent user ID
+      return getMockChildrenTransport(parentUserId);
     }
 
     try {
@@ -118,10 +115,17 @@ class ParentService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      const { mockChildrenTransport } = await import('@/lib/mockData');
-      const child = mockChildrenTransport.find(c => c.id === childId);
+      const { getMockChildrenTransport } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      const children = getMockChildrenTransport(parentUserId);
+      const child = children.find(c => c.id === childId);
       if (!child) {
-        throw new Error('Child not found');
+        throw new Error('Child not found or you do not have permission to view this child');
       }
       return child;
     }
@@ -143,10 +147,21 @@ class ParentService {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
+      const { getMockChildrenTransport } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      // Get parent's children
+      const children = getMockChildrenTransport(parentUserId);
+      const activeRoutes = [...new Set(children.map(c => c.routeId).filter(Boolean))].length;
+      
       return {
-        myChildren: 2,
-        activeRoutes: 1,
-        upcomingTrips: 5,
+        myChildren: children.length,
+        activeRoutes: activeRoutes,
+        upcomingTrips: activeRoutes * 2, // Mock: 2 trips per route (morning + evening)
       };
     }
 

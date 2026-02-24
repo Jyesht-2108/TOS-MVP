@@ -6,7 +6,7 @@ export const mockStudents: Student[] = [
     id: 'student-1',
     tenantId: 'tenant-1',
     name: 'Emma Johnson',
-    parentUserId: 'parent-1',
+    parentUserId: '550e8400-e29b-41d4-a716-446655440002', // parent@school.com
     parentName: 'Robert Johnson',
     grade: '5',
     section: 'A',
@@ -18,7 +18,7 @@ export const mockStudents: Student[] = [
     id: 'student-2',
     tenantId: 'tenant-1',
     name: 'Liam Smith',
-    parentUserId: 'parent-2',
+    parentUserId: '550e8400-e29b-41d4-a716-446655440002', // parent@school.com
     parentName: 'Jennifer Smith',
     grade: '6',
     section: 'B',
@@ -306,36 +306,73 @@ export const getMockDriverAssignments = (routeId: string): RouteDriverAssignment
   return mockDriverAssignments[routeId] || [];
 };
 
-// Mock Children Transport Info for Parent Portal
-export const mockChildrenTransport: import('@/types').ChildTransportInfo[] = [
-  {
-    id: 'student-1',
-    name: 'Emma Johnson',
-    grade: '5',
-    routeId: 'route-1',
-    routeName: 'North District Route',
-    routeStatus: 'ACTIVE',
-    driverName: 'John Anderson',
-    driverPhone: '+1-555-0101',
-    vehicleNumber: 'BUS-101',
-    pickupTime: '07:30 AM',
-    dropoffTime: '03:30 PM',
-    pickupLocation: '123 Main St, North District',
-    dropoffLocation: 'School Main Entrance',
-  },
-  {
-    id: 'student-2',
-    name: 'Liam Smith',
-    grade: '6',
-    routeId: 'route-1',
-    routeName: 'North District Route',
-    routeStatus: 'ACTIVE',
-    driverName: 'John Anderson',
-    driverPhone: '+1-555-0101',
-    vehicleNumber: 'BUS-101',
-    pickupTime: '07:35 AM',
-    dropoffTime: '03:30 PM',
-    pickupLocation: '456 Oak Ave, North District',
-    dropoffLocation: 'School Main Entrance',
-  },
-];
+// Helper function to generate children transport info from students data
+// This ensures data consistency between admin and parent portals
+export const getMockChildrenTransport = (parentUserId?: string): import('@/types').ChildTransportInfo[] => {
+  // Filter students by parent if parentUserId is provided
+  const filteredStudents = parentUserId 
+    ? mockStudents.filter(s => s.parentUserId === parentUserId)
+    : mockStudents;
+
+  return filteredStudents.map(student => {
+    // Find the route for this student
+    const route = student.routeId ? mockRoutes.find(r => r.id === student.routeId) : undefined;
+    
+    // Find the driver for this route
+    const driverAssignment = student.routeId ? mockDriverAssignments[student.routeId]?.[0] : undefined;
+    const driver = driverAssignment?.driver;
+
+    return {
+      id: student.id,
+      name: student.name,
+      grade: student.grade,
+      routeId: student.routeId,
+      routeName: student.routeName,
+      routeStatus: route?.status,
+      driverName: driver?.name,
+      driverPhone: driver?.phone,
+      vehicleNumber: driver?.vehicleNumber,
+      pickupTime: student.routeId ? '07:30 AM' : undefined, // Mock pickup time
+      dropoffTime: student.routeId ? '03:30 PM' : undefined, // Mock dropoff time
+      pickupLocation: student.routeId ? `${student.name}'s Home` : undefined,
+      dropoffLocation: student.routeId ? 'School Main Entrance' : undefined,
+    };
+  });
+};
+
+// For backward compatibility - returns all children transport info
+export const mockChildrenTransport = getMockChildrenTransport();
+
+// Helper function to generate live tracking data from routes and drivers
+// This ensures data consistency with admin portal
+export const getMockLiveTracking = (): import('@/types').LiveRouteTracking[] => {
+  return mockRoutes
+    .filter(route => route.status === 'ACTIVE')
+    .map(route => {
+      const driverAssignment = mockDriverAssignments[route.id]?.[0];
+      const driver = driverAssignment?.driver;
+
+      // Generate mock GPS coordinates (in a real app, this would come from GPS device)
+      const baseLatitude = 40.7128;
+      const baseLongitude = -74.0060;
+      const routeIndex = mockRoutes.findIndex(r => r.id === route.id);
+      
+      return {
+        routeId: route.id,
+        routeName: route.name,
+        vehicleNumber: driver?.vehicleNumber,
+        driverName: driver?.name,
+        driverPhone: driver?.phone,
+        currentLocation: {
+          latitude: baseLatitude + (routeIndex * 0.05),
+          longitude: baseLongitude + (routeIndex * 0.05),
+          timestamp: new Date().toISOString(),
+          speed: 25 + (routeIndex * 5),
+          heading: 90 + (routeIndex * 45),
+        },
+        tripStatus: 'ACTIVE' as const,
+        lastUpdated: new Date().toISOString(),
+        estimatedArrival: new Date(Date.now() + (15 + routeIndex * 5) * 60 * 1000).toISOString(),
+      };
+    });
+};
