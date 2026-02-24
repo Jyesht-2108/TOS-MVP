@@ -13,9 +13,12 @@ import { NotFound } from '@/pages/NotFound';
 import { AdminDashboard } from '@/modules/admin/pages/Dashboard';
 import { Routes as AdminRoutes } from '@/modules/admin/pages/Routes';
 import { RouteDetails } from '@/modules/admin/pages/RouteDetails';
+import { Drivers } from '@/modules/admin/pages/Drivers';
+import { Students } from '@/modules/admin/pages/Students';
 import { ParentDashboard } from '@/modules/parent/pages/Dashboard';
 import { MyChildren } from '@/modules/parent/pages/MyChildren';
 import { TransportDetails } from '@/modules/parent/pages/TransportDetails';
+import { TransportInfo } from '@/modules/parent/pages/TransportInfo';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 
@@ -70,8 +73,8 @@ function AnimatedRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/routes" element={<AdminRoutes />} />
           <Route path="/admin/routes/:routeId" element={<RouteDetails />} />
-          <Route path="/admin/drivers" element={<div>Drivers Page (Coming Soon)</div>} />
-          <Route path="/admin/students" element={<div>Students Page (Coming Soon)</div>} />
+          <Route path="/admin/drivers" element={<Drivers />} />
+          <Route path="/admin/students" element={<Students />} />
         </Route>
 
         {/* Parent Routes */}
@@ -87,7 +90,7 @@ function AnimatedRoutes() {
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/parent/children" element={<MyChildren />} />
           <Route path="/parent/children/:childId" element={<TransportDetails />} />
-          <Route path="/parent/transport" element={<div>Transport Info Page (Coming Soon)</div>} />
+          <Route path="/parent/transport" element={<TransportInfo />} />
         </Route>
 
         {/* Default redirect */}

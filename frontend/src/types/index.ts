@@ -46,6 +46,11 @@ export interface Student {
   tenantId: string;
   name: string;
   parentUserId?: string;
+  parentName?: string;
+  grade?: string;
+  section?: string;
+  routeId?: string;
+  routeName?: string;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -55,6 +60,10 @@ export interface Driver {
   tenantId: string;
   name: string;
   phone: string;
+  licenseNumber?: string;
+  vehicleNumber?: string;
+  routeId?: string;
+  routeName?: string;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -122,4 +131,25 @@ export interface ChildTransportInfo {
   dropoffTime?: string;
   pickupLocation?: string;
   dropoffLocation?: string;
+}
+
+// Live Tracking Types
+export interface BusLocation {
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+  speed?: number;
+  heading?: number;
+}
+
+export interface LiveRouteTracking {
+  routeId: string;
+  routeName: string;
+  vehicleNumber?: string;
+  driverName?: string;
+  driverPhone?: string;
+  currentLocation?: BusLocation;
+  tripStatus: 'ACTIVE' | 'INACTIVE' | 'COMPLETED';
+  lastUpdated: string;
+  estimatedArrival?: string;
 }

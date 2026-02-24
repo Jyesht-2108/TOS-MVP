@@ -1,100 +1,125 @@
 import api from '@/lib/api';
-import { ParentDashboardStats, ChildTransportInfo } from '@/types';
+import { LiveRouteTracking, ChildTransportInfo } from '@/types';
 
 // Check if we should use mock data
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
 
 // Mock data for development
-const MOCK_PARENT_STATS: ParentDashboardStats = {
-  myChildren: 2,
-  activeRoutes: 2,
-  upcomingTrips: 4,
-};
-
-const MOCK_CHILDREN_TRANSPORT: ChildTransportInfo[] = [
+const MOCK_LIVE_TRACKING: LiveRouteTracking[] = [
   {
-    id: 'student-1',
-    name: 'Emma Johnson',
-    grade: 'Grade 5',
     routeId: 'route-1',
     routeName: 'North District Route',
-    routeStatus: 'ACTIVE',
+    vehicleNumber: 'BUS-101',
     driverName: 'John Anderson',
-    driverPhone: '+1 (555) 123-4567',
-    vehicleNumber: 'BUS-001',
-    pickupTime: '07:30 AM',
-    dropoffTime: '03:45 PM',
-    pickupLocation: '123 Oak Street',
-    dropoffLocation: 'Main School Building',
+    driverPhone: '+1-555-0101',
+    currentLocation: {
+      latitude: 40.7128,
+      longitude: -74.0060,
+      timestamp: new Date().toISOString(),
+      speed: 35,
+      heading: 180,
+    },
+    tripStatus: 'ACTIVE',
+    lastUpdated: new Date().toISOString(),
+    estimatedArrival: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
   },
   {
-    id: 'student-7',
-    name: 'James Johnson',
-    grade: 'Grade 3',
     routeId: 'route-2',
     routeName: 'South District Route',
-    routeStatus: 'ACTIVE',
+    vehicleNumber: 'BUS-102',
     driverName: 'Sarah Thompson',
-    driverPhone: '+1 (555) 987-6543',
-    vehicleNumber: 'BUS-002',
-    pickupTime: '07:45 AM',
-    dropoffTime: '04:00 PM',
-    pickupLocation: '123 Oak Street',
-    dropoffLocation: 'Elementary Building',
+    driverPhone: '+1-555-0102',
+    currentLocation: {
+      latitude: 40.7580,
+      longitude: -73.9855,
+      timestamp: new Date().toISOString(),
+      speed: 25,
+      heading: 90,
+    },
+    tripStatus: 'ACTIVE',
+    lastUpdated: new Date().toISOString(),
+    estimatedArrival: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
   },
 ];
 
 class ParentService {
   /**
-   * Fetch parent dashboard statistics
-   * @returns Promise with parent dashboard stats
+   * Fetch live tracking for parent's children routes
+   * @returns Promise with array of live route tracking data
    */
-  async fetchDashboardStats(): Promise<ParentDashboardStats> {
+  async fetchLiveTracking(): Promise<LiveRouteTracking[]> {
     if (USE_MOCK) {
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return MOCK_PARENT_STATS;
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return MOCK_LIVE_TRACKING;
     }
 
     try {
-      const response = await api.get<ParentDashboardStats>('/parent/dashboard/stats');
+      const response = await api.get<LiveRouteTracking[]>('/parent/live-tracking');
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch parent dashboard stats:', error);
+      console.error('Failed to fetch live tracking:', error);
       throw error;
     }
   }
 
   /**
-   * Fetch children transport information for the logged-in parent
+   * Fetch live tracking for a specific route
+   * @param routeId - The route ID to track
+   * @returns Promise with live route tracking data
+   */
+  async fetchRouteTracking(routeId: string): Promise<LiveRouteTracking> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const tracking = MOCK_LIVE_TRACKING.find(t => t.routeId === routeId);
+      if (!tracking) {
+        throw new Error('Route tracking not found');
+      }
+      return tracking;
+    }
+
+    try {
+      const response = await api.get<LiveRouteTracking>(`/parent/routes/${routeId}/tracking`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch route tracking:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch children transport info for parent
    * @returns Promise with array of children transport info
    */
   async fetchChildrenTransport(): Promise<ChildTransportInfo[]> {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      return MOCK_CHILDREN_TRANSPORT;
+      const { mockChildrenTransport } = await import('@/lib/mockData');
+      return mockChildrenTransport;
     }
 
     try {
-      const response = await api.get<ChildTransportInfo[]>('/parent/children');
+      const response = await api.get<ChildTransportInfo[]>('/parent/children/transport');
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch children transport info:', error);
+      console.error('Failed to fetch children transport:', error);
       throw error;
     }
   }
 
   /**
-   * Fetch transport details for a specific child
-   * @param childId - The ID of the child
+   * Fetch child transport details by child ID
+   * @param childId - The child ID
    * @returns Promise with child transport info
    */
   async fetchChildTransportDetails(childId: string): Promise<ChildTransportInfo> {
     if (USE_MOCK) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      const child = MOCK_CHILDREN_TRANSPORT.find(c => c.id === childId);
+      const { mockChildrenTransport } = await import('@/lib/mockData');
+      const child = mockChildrenTransport.find(c => c.id === childId);
       if (!child) {
         throw new Error('Child not found');
       }
@@ -102,10 +127,34 @@ class ParentService {
     }
 
     try {
-      const response = await api.get<ChildTransportInfo>(`/parent/children/${childId}`);
+      const response = await api.get<ChildTransportInfo>(`/parent/children/${childId}/transport`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch child transport details:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch parent dashboard statistics
+   * @returns Promise with dashboard stats
+   */
+  async fetchDashboardStats(): Promise<import('@/types').ParentDashboardStats> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return {
+        myChildren: 2,
+        activeRoutes: 1,
+        upcomingTrips: 5,
+      };
+    }
+
+    try {
+      const response = await api.get<import('@/types').ParentDashboardStats>('/parent/dashboard/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
       throw error;
     }
   }
