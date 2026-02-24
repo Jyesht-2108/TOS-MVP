@@ -94,7 +94,7 @@
   - Update login redirect logic to only handle ADMIN and PARENT roles
   - _Requirements: 8.1_
 
-- [ ] 9. Create routes list page for admin
+- [x] 9. Create routes list page for admin
   - Create Routes page component in admin module
   - Implement data table with columns: Route Name, Status, Driver, Student Count, Actions
   - Add filter dropdown for status (All, Active, Inactive)
@@ -106,7 +106,7 @@
   - Integrate with React Query for data fetching and mutations
   - _Requirements: 2.2, 6.1, 6.2, 6.5_
 
-- [ ] 10. Create route creation dialog
+- [x] 10. Create route creation dialog
   - Create CreateRouteDialog component
   - Implement form with React Hook Form and Zod validation
   - Add fields: Route Name (required), Status (Active/Inactive)
@@ -118,7 +118,7 @@
   - Style with shadcn/ui Dialog, Form, Input, Select components
   - _Requirements: 2.1, 2.4_
 
-- [ ] 11. Create route details page
+- [x] 11. Create route details page
   - Create RouteDetails page component
   - Display route information: Name, Status, Created Date
   - Show assigned driver section with driver details or "Unassigned" state
@@ -130,7 +130,7 @@
   - Use shadcn/ui Card, Table, Button, Badge components
   - _Requirements: 2.2, 3.4, 4.4, 6.2_
 
-- [ ] 12. Create driver assignment dialog
+- [x] 12. Create driver assignment dialog
   - Create AssignDriverDialog component
   - Fetch available drivers list from API
   - Implement driver selection dropdown with search
@@ -142,7 +142,7 @@
   - Style with shadcn/ui Dialog, Select, Button components
   - _Requirements: 4.1, 4.2_
 
-- [ ] 13. Create student assignment dialog
+- [x] 13. Create student assignment dialog
   - Create AssignStudentsDialog component
   - Fetch available students list from API
   - Implement multi-select checkbox list for students

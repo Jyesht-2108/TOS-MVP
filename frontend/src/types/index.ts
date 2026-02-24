@@ -3,14 +3,14 @@ export interface User {
   id: string;
   tenantId: string;
   role: 'ADMIN' | 'DRIVER' | 'PARENT';
-  phone: string;
+  email: string;
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
 export interface LoginRequest {
-  phone: string;
-  password?: string;
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {

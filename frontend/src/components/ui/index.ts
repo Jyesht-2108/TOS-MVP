@@ -1,6 +1,7 @@
 // Export all UI components for easy importing
 export { Button } from "./button"
 export { Input } from "./input"
+export { Badge } from "./badge"
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./card"
 export { Label } from "./label"
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator, SelectScrollUpButton, SelectScrollDownButton } from "./select"

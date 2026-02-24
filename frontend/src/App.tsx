@@ -8,6 +8,8 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { ParentLayout } from '@/layouts/ParentLayout';
 import { Login } from '@/pages/Login';
 import { AdminDashboard } from '@/modules/admin/pages/Dashboard';
+import { Routes as AdminRoutes } from '@/modules/admin/pages/Routes';
+import { RouteDetails } from '@/modules/admin/pages/RouteDetails';
 import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient({
@@ -41,7 +43,8 @@ function App() {
               }
             >
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/routes" element={<div>Routes Page (Coming Soon)</div>} />
+              <Route path="/admin/routes" element={<AdminRoutes />} />
+              <Route path="/admin/routes/:routeId" element={<RouteDetails />} />
               <Route path="/admin/drivers" element={<div>Drivers Page (Coming Soon)</div>} />
               <Route path="/admin/students" element={<div>Students Page (Coming Soon)</div>} />
             </Route>

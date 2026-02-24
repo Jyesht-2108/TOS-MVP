@@ -1,5 +1,6 @@
 import api from '@/lib/api';
-import { DashboardStats, RecentActivity, RouteResponse } from '@/types';
+import { DashboardStats, RecentActivity, RouteResponse, Driver, Student } from '@/types';
+import { mockDrivers } from '@/lib/mockData';
 
 // Check if we should use mock data
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
@@ -155,6 +156,47 @@ class AdminService {
       return response.data;
     } catch (error) {
       console.error('Failed to fetch route overview:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all drivers for admin management
+   * @returns Promise with array of drivers
+   */
+  async fetchDrivers(): Promise<Driver[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return mockDrivers;
+    }
+
+    try {
+      const response = await api.get<Driver[]>('/admin/drivers');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch drivers:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all students for admin management
+   * @returns Promise with array of students
+   */
+  async fetchStudents(): Promise<Student[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { mockStudents } = await import('@/lib/mockData');
+      return mockStudents;
+    }
+
+    try {
+      const response = await api.get<Student[]>('/admin/students');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
       throw error;
     }
   }

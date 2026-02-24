@@ -54,7 +54,7 @@ describe('Login Component', () => {
     
     expect(screen.getByText('Transport Operations')).toBeInTheDocument();
     expect(screen.getByText('Sign in to access the system')).toBeInTheDocument();
-    expect(screen.getByLabelText('Phone Number')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
@@ -64,19 +64,19 @@ describe('Login Component', () => {
     
     expect(screen.getByText('Quick Login (Demo Mode)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Admin' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Driver' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Parent' })).toBeInTheDocument();
   });
 
-  it('updates phone and password fields on input', () => {
+  it('updates email and password fields on input', () => {
     renderLogin();
     
-    const phoneInput = screen.getByLabelText('Phone Number') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Email Address') as HTMLInputElement;
     const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
     
-    fireEvent.change(phoneInput, { target: { value: '+1234567890' } });
+    fireEvent.change(emailInput, { target: { value: 'admin@school.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     
-    expect(phoneInput.value).toBe('+1234567890');
+    expect(emailInput.value).toBe('admin@school.com');
     expect(passwordInput.value).toBe('password123');
   });
 
@@ -86,42 +86,42 @@ describe('Login Component', () => {
     const adminButton = screen.getByRole('button', { name: 'Admin' });
     fireEvent.click(adminButton);
     
-    const phoneInput = screen.getByLabelText('Phone Number') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Email Address') as HTMLInputElement;
     const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
     
-    expect(phoneInput.value).toBe('+1234567890');
+    expect(emailInput.value).toBe('admin@school.com');
     expect(passwordInput.value).toBe('admin123');
   });
 
-  it('populates fields when Driver quick login is clicked', () => {
+  it('populates fields when Parent quick login is clicked', () => {
     renderLogin();
     
-    const driverButton = screen.getByRole('button', { name: 'Driver' });
-    fireEvent.click(driverButton);
+    const parentButton = screen.getByRole('button', { name: 'Parent' });
+    fireEvent.click(parentButton);
     
-    const phoneInput = screen.getByLabelText('Phone Number') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Email Address') as HTMLInputElement;
     const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
     
-    expect(phoneInput.value).toBe('+0987654321');
-    expect(passwordInput.value).toBe('driver123');
+    expect(emailInput.value).toBe('parent@school.com');
+    expect(passwordInput.value).toBe('parent123');
   });
 
   it('disables form inputs and buttons during loading', async () => {
     renderLogin();
     
-    const phoneInput = screen.getByLabelText('Phone Number');
+    const emailInput = screen.getByLabelText('Email Address');
     const passwordInput = screen.getByLabelText('Password');
     const submitButton = screen.getByRole('button', { name: /sign in/i });
     const adminButton = screen.getByRole('button', { name: 'Admin' });
     
-    fireEvent.change(phoneInput, { target: { value: '+1234567890' } });
+    fireEvent.change(emailInput, { target: { value: 'admin@school.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     
     fireEvent.click(submitButton);
     
     // During loading, inputs and buttons should be disabled
     await waitFor(() => {
-      expect(phoneInput).toBeDisabled();
+      expect(emailInput).toBeDisabled();
       expect(passwordInput).toBeDisabled();
       expect(submitButton).toBeDisabled();
       expect(adminButton).toBeDisabled();
@@ -131,11 +131,11 @@ describe('Login Component', () => {
   it('displays loading state when form is submitted', async () => {
     renderLogin();
     
-    const phoneInput = screen.getByLabelText('Phone Number');
+    const emailInput = screen.getByLabelText('Email Address');
     const passwordInput = screen.getByLabelText('Password');
     const submitButton = screen.getByRole('button', { name: /sign in/i });
     
-    fireEvent.change(phoneInput, { target: { value: '+1234567890' } });
+    fireEvent.change(emailInput, { target: { value: 'admin@school.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     
     fireEvent.click(submitButton);

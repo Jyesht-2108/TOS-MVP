@@ -8,7 +8,7 @@ import { Bus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Login: React.FC = () => {
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -26,8 +26,8 @@ export const Login: React.FC = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!phone.trim()) {
-      toast.error('Phone number is required');
+    if (!email.trim()) {
+      toast.error('Email is required');
       return;
     }
     
@@ -39,7 +39,7 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ phone, password });
+      await login({ email, password });
       toast.success('Welcome back!');
       
       // Get the user from auth context after successful login
@@ -55,13 +55,13 @@ export const Login: React.FC = () => {
   };
 
   const quickLogin = (role: 'ADMIN' | 'PARENT') => {
-    const credentials: Record<string, { phone: string; password: string }> = {
-      ADMIN: { phone: '+1234567890', password: 'admin123' },
-      PARENT: { phone: '+1122334455', password: 'parent123' },
+    const credentials: Record<string, { email: string; password: string }> = {
+      ADMIN: { email: 'admin@school.com', password: 'admin123' },
+      PARENT: { email: 'parent@school.com', password: 'parent123' },
     };
     
     const cred = credentials[role];
-    setPhone(cred.phone);
+    setEmail(cred.email);
     setPassword(cred.password);
   };
 
@@ -80,13 +80,13 @@ export const Login: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
+              <label htmlFor="email" className="text-sm font-medium">Email Address</label>
               <Input
-                id="phone"
-                type="text"
-                placeholder="+1234567890"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="admin@school.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
               />

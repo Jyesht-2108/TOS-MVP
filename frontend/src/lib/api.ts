@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { setupMockApi } from './mockApi';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -47,5 +48,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Setup mock API if enabled
+setupMockApi(api);
 
 export default api;

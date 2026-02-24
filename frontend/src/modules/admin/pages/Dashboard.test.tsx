@@ -35,7 +35,7 @@ describe('AdminDashboard', () => {
         id: '1',
         tenantId: 'tenant-1',
         role: 'ADMIN',
-        phone: '+1234567890',
+        email: 'admin@school.com',
         name: 'John Admin',
         status: 'ACTIVE',
       },

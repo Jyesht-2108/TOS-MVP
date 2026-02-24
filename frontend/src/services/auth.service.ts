@@ -3,26 +3,26 @@ import { LoginRequest, LoginResponse, User } from '@/types';
 
 // Mock users for development
 const MOCK_USERS = {
-  '+1234567890': {
-    phone: '+1234567890',
+  'admin@school.com': {
+    email: 'admin@school.com',
     password: 'admin123',
     user: {
       id: '550e8400-e29b-41d4-a716-446655440001',
       tenantId: '550e8400-e29b-41d4-a716-446655440000',
       role: 'ADMIN' as const,
-      phone: '+1234567890',
+      email: 'admin@school.com',
       name: 'Admin User',
       status: 'ACTIVE' as const,
     },
   },
-  '+1122334455': {
-    phone: '+1122334455',
+  'parent@school.com': {
+    email: 'parent@school.com',
     password: 'parent123',
     user: {
       id: '550e8400-e29b-41d4-a716-446655440002',
       tenantId: '550e8400-e29b-41d4-a716-446655440000',
       role: 'PARENT' as const,
-      phone: '+1122334455',
+      email: 'parent@school.com',
       name: 'Parent User',
       status: 'ACTIVE' as const,
     },
@@ -34,7 +34,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV
 
 class AuthService {
   /**
-   * Login with phone and password
+   * Login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     // Use mock authentication if enabled
@@ -60,7 +60,7 @@ class AuthService {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const mockUser = MOCK_USERS[credentials.phone as keyof typeof MOCK_USERS];
+    const mockUser = MOCK_USERS[credentials.email as keyof typeof MOCK_USERS];
 
     if (!mockUser || mockUser.password !== credentials.password) {
       throw new Error('Invalid credentials');
