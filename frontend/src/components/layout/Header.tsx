@@ -12,7 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  showSidebarToggle?: boolean;
+}
+
+export const Header: React.FC<HeaderProps> = ({ showSidebarToggle = true }) => {
   const { user, logout } = useAuth();
 
   const getInitials = (name: string): string => {
@@ -26,9 +30,13 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 md:h-16 items-center gap-2 md:gap-4 border-b bg-background px-4 md:px-6">
-      <SidebarTrigger className="touch-target" />
+      {showSidebarToggle && <SidebarTrigger className="touch-target" />}
       
-      <div className="flex-1" />
+      <div className="flex-1">
+        {!showSidebarToggle && (
+          <h1 className="text-lg md:text-xl font-bold">School Transport</h1>
+        )}
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

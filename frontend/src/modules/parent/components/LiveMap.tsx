@@ -94,7 +94,6 @@ export const LiveMap: React.FC<LiveMapProps> = ({ tracking, height = '500px' }) 
           <div class="p-2">
             <h3 class="font-semibold text-sm mb-1">${route.routeName}</h3>
             <p class="text-xs text-gray-600 mb-1">Vehicle: ${route.vehicleNumber || 'N/A'}</p>
-            <p class="text-xs text-gray-600 mb-1">Driver: ${route.driverName || 'N/A'}</p>
             <p class="text-xs text-gray-600 mb-1">Speed: ${route.currentLocation.speed || 0} km/h</p>
             <p class="text-xs text-gray-500">Last updated: ${new Date(route.lastUpdated).toLocaleTimeString()}</p>
           </div>

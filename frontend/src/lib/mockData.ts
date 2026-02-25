@@ -329,13 +329,13 @@ export const getMockChildrenTransport = (parentUserId?: string): import('@/types
       routeId: student.routeId,
       routeName: student.routeName,
       routeStatus: route?.status,
-      driverName: driver?.name,
-      driverPhone: driver?.phone,
+      driverName: undefined, // Hide driver name from parents
+      driverPhone: undefined, // Hide driver phone from parents
       vehicleNumber: driver?.vehicleNumber,
       pickupTime: student.routeId ? '07:30 AM' : undefined, // Mock pickup time
       dropoffTime: student.routeId ? '03:30 PM' : undefined, // Mock dropoff time
-      pickupLocation: student.routeId ? `${student.name}'s Home` : undefined,
-      dropoffLocation: student.routeId ? 'School Main Entrance' : undefined,
+      pickupLocation: undefined, // Hide pickup location from parents
+      dropoffLocation: undefined, // Hide dropoff location from parents
     };
   });
 };
@@ -361,8 +361,8 @@ export const getMockLiveTracking = (): import('@/types').LiveRouteTracking[] => 
         routeId: route.id,
         routeName: route.name,
         vehicleNumber: driver?.vehicleNumber,
-        driverName: driver?.name,
-        driverPhone: driver?.phone,
+        driverName: undefined, // Hide driver name from parents
+        driverPhone: undefined, // Hide driver phone from parents
         currentLocation: {
           latitude: baseLatitude + (routeIndex * 0.05),
           longitude: baseLongitude + (routeIndex * 0.05),

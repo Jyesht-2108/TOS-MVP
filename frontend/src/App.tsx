@@ -18,9 +18,6 @@ import { Students } from '@/modules/admin/pages/Students';
 import { LiveMonitoring } from '@/modules/admin/pages/LiveMonitoring';
 import { TripDetails } from '@/modules/admin/pages/TripDetails';
 import { ParentDashboard } from '@/modules/parent/pages/Dashboard';
-import { MyChildren } from '@/modules/parent/pages/MyChildren';
-import { TransportDetails } from '@/modules/parent/pages/TransportDetails';
-import { TransportInfo } from '@/modules/parent/pages/TransportInfo';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 
@@ -92,9 +89,6 @@ function AnimatedRoutes() {
           }
         >
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
-          <Route path="/parent/children" element={<MyChildren />} />
-          <Route path="/parent/children/:childId" element={<TransportDetails />} />
-          <Route path="/parent/transport" element={<TransportInfo />} />
         </Route>
 
         {/* Default redirect */}
