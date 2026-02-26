@@ -14,8 +14,10 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,12 +40,14 @@ import { AnimatedPage } from '@/components/AnimatedPage';
 import { adminService } from '@/services/admin.service';
 import { Driver, DriverAttendanceStatus } from '@/types';
 import { format } from 'date-fns';
+import { CreateDriverDialog } from '../components/CreateDriverDialog';
 
 export const Drivers: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [routeFilter, setRouteFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
+  const [isCreateDriverDialogOpen, setIsCreateDriverDialogOpen] = useState(false);
 
   // Fetch drivers
   const { 
@@ -167,6 +171,13 @@ export const Drivers: React.FC = () => {
               Manage drivers and their route assignments
             </p>
           </div>
+          <Button 
+            onClick={() => setIsCreateDriverDialogOpen(true)} 
+            className="w-full sm:w-auto touch-target"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Driver
+          </Button>
         </motion.div>
 
         {/* Statistics Cards */}
@@ -537,6 +548,12 @@ export const Drivers: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Create Driver Dialog */}
+      <CreateDriverDialog
+        open={isCreateDriverDialogOpen}
+        onOpenChange={setIsCreateDriverDialogOpen}
+      />
     </AnimatedPage>
   );
 };
