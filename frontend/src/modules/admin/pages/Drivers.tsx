@@ -114,8 +114,11 @@ export const Drivers: React.FC = () => {
     };
   }, [drivers]);
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
-    return status === 'ACTIVE' ? 'default' : 'secondary';
+  const getStatusBadgeVariant = (status: string) => {
+    if (status === 'ACTIVE') {
+      return <Badge className="bg-green-500">ACTIVE</Badge>;
+    }
+    return <Badge className="bg-gray-500">INACTIVE</Badge>;
   };
 
   const getAttendanceStatusBadge = (status: DriverAttendanceStatus) => {
@@ -535,9 +538,7 @@ export const Drivers: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(driver.status)}>
-                            {driver.status}
-                          </Badge>
+                          {getStatusBadgeVariant(driver.status)}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -194,7 +194,7 @@ export interface DriverActivity {
   lastTripEndTime?: string;
   lastGPSTimestamp?: string;
   totalTripsToday: number;
-  status: 'ACTIVE' | 'IDLE' | 'OFFLINE';
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 // Audit Log Types

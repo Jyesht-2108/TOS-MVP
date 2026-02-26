@@ -100,14 +100,10 @@ export const LiveMonitoring: React.FC = () => {
   };
 
   const getDriverStatusBadge = (status: DriverActivity['status']) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge variant="default" className="bg-green-500">Active</Badge>;
-      case 'IDLE':
-        return <Badge variant="secondary">Idle</Badge>;
-      case 'OFFLINE':
-        return <Badge variant="secondary" className="bg-gray-400">Offline</Badge>;
+    if (status === 'ACTIVE') {
+      return <Badge className="bg-green-500">Active</Badge>;
     }
+    return <Badge className="bg-gray-500">Inactive</Badge>;
   };
 
   // Filter active trips by search query

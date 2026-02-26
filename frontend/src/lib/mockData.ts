@@ -589,7 +589,7 @@ export const getMockDriverActivity = (): import('@/types').DriverActivity[] => {
       lastTripEndTime: lastTrip?.endTime,
       lastGPSTimestamp: hasActiveTrip ? new Date(now.getTime() - lastGPSSeconds * 1000).toISOString() : undefined,
       totalTripsToday,
-      status: hasActiveTrip ? 'ACTIVE' : (driver.status === 'ACTIVE' ? 'IDLE' : 'OFFLINE'),
+      status: hasActiveTrip ? 'ACTIVE' : 'INACTIVE',
     };
   });
 };

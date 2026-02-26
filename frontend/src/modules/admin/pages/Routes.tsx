@@ -103,8 +103,11 @@ export const Routes: React.FC = () => {
     setIsAssignStudentsDialogOpen(true);
   };
 
-  const getStatusBadgeVariant = (status: RouteStatus): "default" | "secondary" => {
-    return status === 'ACTIVE' ? 'default' : 'secondary';
+  const getStatusBadgeVariant = (status: RouteStatus) => {
+    if (status === 'ACTIVE') {
+      return <Badge className="bg-green-500">ACTIVE</Badge>;
+    }
+    return <Badge className="bg-gray-500">INACTIVE</Badge>;
   };
 
   return (
@@ -216,9 +219,7 @@ export const Routes: React.FC = () => {
                     <TableRow key={route.id}>
                       <TableCell className="font-medium">{route.name}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusBadgeVariant(route.status)}>
-                          {route.status}
-                        </Badge>
+                        {getStatusBadgeVariant(route.status)}
                       </TableCell>
                       <TableCell>
                         {route.driverName || (

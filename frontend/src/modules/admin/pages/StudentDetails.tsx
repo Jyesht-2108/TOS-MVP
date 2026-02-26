@@ -72,8 +72,11 @@ export const StudentDetails: React.FC = () => {
     enabled: !!studentId && !!student?.routeId,
   });
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
-    return status === 'ACTIVE' ? 'default' : 'secondary';
+  const getStatusBadgeVariant = (status: string) => {
+    if (status === 'ACTIVE') {
+      return <Badge className="bg-green-500 text-sm">ACTIVE</Badge>;
+    }
+    return <Badge className="bg-gray-500 text-sm">INACTIVE</Badge>;
   };
 
   const getAttendanceStatusBadge = (status: AttendanceStatus) => {
@@ -244,9 +247,7 @@ export const StudentDetails: React.FC = () => {
                   <p className="text-sm font-medium text-muted-foreground mb-2">
                     Status
                   </p>
-                  <Badge variant={getStatusBadgeVariant(student.status)} className="text-sm">
-                    {student.status}
-                  </Badge>
+                  {getStatusBadgeVariant(student.status)}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">

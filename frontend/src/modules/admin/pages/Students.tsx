@@ -146,8 +146,11 @@ export const Students: React.FC = () => {
     };
   }, [students]);
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
-    return status === 'ACTIVE' ? 'default' : 'secondary';
+  const getStatusBadgeVariant = (status: string) => {
+    if (status === 'ACTIVE') {
+      return <Badge className="bg-green-500">ACTIVE</Badge>;
+    }
+    return <Badge className="bg-gray-500">INACTIVE</Badge>;
   };
 
   // Render student table
@@ -210,9 +213,7 @@ export const Students: React.FC = () => {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant={getStatusBadgeVariant(student.status)}>
-                  {student.status}
-                </Badge>
+                {getStatusBadgeVariant(student.status)}
               </TableCell>
             </TableRow>
           ))}
