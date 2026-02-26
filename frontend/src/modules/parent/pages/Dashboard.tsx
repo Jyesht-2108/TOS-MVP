@@ -9,7 +9,10 @@ import {
   RefreshCw,
   AlertCircle,
   TrendingUp,
-  Calendar
+  Calendar,
+  User,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -94,6 +97,33 @@ export const ParentDashboard: React.FC = () => {
     queryFn: () => parentService.fetchLiveTracking(),
     refetchInterval: autoRefresh ? 10000 : false,
     refetchIntervalInBackground: false,
+  });
+
+  // Fetch children transport info
+  const {
+    data: children,
+    isLoading: childrenLoading,
+  } = useQuery({
+    queryKey: ['childrenTransport'],
+    queryFn: () => parentService.fetchChildrenTransport(),
+    refetchInterval: 30000,
+  });
+
+  // Fetch children attendance
+  const {
+    data: childrenAttendance,
+    isLoading: attendanceLoading,
+  } = useQuery({
+    queryKey: ['childrenAttendance'],
+    queryFn: async () => {
+      if (!children) return [];
+      const { adminService } = await import('@/services/admin.service');
+      const attendancePromises = children.map(child => 
+        adminService.fetchStudentAttendance(child.id).catch(() => null)
+      );
+      return Promise.all(attendancePromises);
+    },
+    enabled: !!children && children.length > 0,
   });
 
   const handleManualRefresh = () => {
@@ -205,6 +235,130 @@ export const ParentDashboard: React.FC = () => {
             </>
           ) : null}
         </div>
+
+        {/* My Children Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              My Children
+            </CardTitle>
+            <CardDescription>
+              Your children using school transport and their attendance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {childrenLoading ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </div>
+            ) : !children || children.length === 0 ? (
+              <div className="text-center py-8">
+                <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  No children registered in the transport system.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {children.map((child, index) => {
+                  const attendance = childrenAttendance?.[index];
+                  return (
+                    <motion.div
+                      key={child.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <Card className="border-2">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-base">{child.name}</CardTitle>
+                                {child.grade && (
+                                  <CardDescription className="text-xs mt-1">
+                                    {child.grade}
+                                  </CardDescription>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {/* Route Info */}
+                          {child.routeName && (
+                            <div className="p-2 bg-muted rounded-lg">
+                              <p className="text-xs text-muted-foreground mb-1">Assigned Route</p>
+                              <p className="text-sm font-semibold">{child.routeName}</p>
+                            </div>
+                          )}
+
+                          {/* Attendance Summary */}
+                          {attendanceLoading ? (
+                            <Skeleton className="h-20 w-full" />
+                          ) : attendance ? (
+                            <div className="p-3 border rounded-lg space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground mb-2">
+                                Attendance Summary
+                              </p>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <CheckCircle className="h-3 w-3 text-green-600" />
+                                    <p className="text-lg font-bold text-green-600">
+                                      {attendance.presentCount}
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">Present</p>
+                                </div>
+                                <div className="text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <XCircle className="h-3 w-3 text-red-600" />
+                                    <p className="text-lg font-bold text-red-600">
+                                      {attendance.absentCount}
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">Absent</p>
+                                </div>
+                                <div className="text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <TrendingUp className="h-3 w-3 text-primary" />
+                                    <p className="text-lg font-bold text-primary">
+                                      {attendance.attendancePercentage}%
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">Rate</p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : child.routeId ? (
+                            <div className="p-3 border rounded-lg text-center">
+                              <p className="text-xs text-muted-foreground">
+                                No attendance data available
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="p-3 border rounded-lg text-center">
+                              <p className="text-xs text-muted-foreground">
+                                Not assigned to a route
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Live Map */}
         <Card>

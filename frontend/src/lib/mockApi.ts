@@ -120,6 +120,19 @@ export const setupMockApi = (api: AxiosInstance) => {
           mockRouteStudents[routeId] = mockRouteStudents[routeId].filter(
             (rs) => rs.studentId !== studentId
           );
+          
+          // Update student count in route
+          const route = mockRoutes.find((r) => r.id === routeId);
+          if (route) {
+            route.studentCount = mockRouteStudents[routeId].length;
+          }
+          
+          // Clear student's routeId and routeName
+          const student = mockStudents.find(s => s.id === studentId);
+          if (student) {
+            student.routeId = undefined;
+            student.routeName = undefined;
+          }
         }
 
         return Promise.reject({
@@ -216,6 +229,14 @@ export const setupMockApi = (api: AxiosInstance) => {
         // Update mock data with attendance information
         mockRouteStudents[routeId] = studentIds.map((studentId: string) => {
           const student = mockStudents.find((s) => s.id === studentId);
+          
+          // Update student's routeId and routeName
+          if (student) {
+            const route = mockRoutes.find(r => r.id === routeId);
+            student.routeId = routeId;
+            student.routeName = route?.name;
+          }
+          
           return {
             routeId,
             studentId,
@@ -314,6 +335,73 @@ export const setupMockApi = (api: AxiosInstance) => {
           config,
           response: {
             data: mockStudents,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /admin/drivers/:driverId/routes
+      if (method === 'get' && url?.match(/^\/admin\/drivers\/[^/]+\/routes$/)) {
+        const driverId = url.split('/')[3];
+        const { getDriverRoutes } = await import('./mockData');
+        const driverRoutes = getDriverRoutes(driverId);
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: driverRoutes,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /admin/drivers/:driverId/trips
+      if (method === 'get' && url?.match(/^\/admin\/drivers\/[^/]+\/trips$/)) {
+        const driverId = url.split('/')[3];
+        const { getDriverTrips } = await import('./mockData');
+        
+        // Parse query parameters for filters
+        const params = config.params || {};
+        const filters = {
+          startDate: params.startDate,
+          endDate: params.endDate,
+          routeId: params.routeId,
+          tripType: params.tripType,
+        };
+        
+        const trips = getDriverTrips(driverId, filters);
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: trips,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /admin/students/:studentId/attendance
+      if (method === 'get' && url?.match(/^\/admin\/students\/[^/]+\/attendance$/)) {
+        const studentId = url.split('/')[3];
+        const { getStudentAttendanceSummary } = await import('./mockData');
+        const attendance = getStudentAttendanceSummary(studentId);
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: attendance,
             status: 200,
             statusText: 'OK',
             headers: {},

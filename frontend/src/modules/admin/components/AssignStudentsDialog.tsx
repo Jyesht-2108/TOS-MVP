@@ -140,7 +140,7 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Assign Students</DialogTitle>
           <DialogDescription>
-            Select students to assign to this route. Students can be assigned to multiple routes.
+            Select students to assign to this route. Students can be assigned to multiple routes if needed.
           </DialogDescription>
         </DialogHeader>
 
@@ -176,6 +176,7 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
                 {filteredStudents.map((student) => {
                   const isSelected = selectedStudentIds.has(student.id);
                   const isInactive = student.status === 'INACTIVE';
+                  const hasRoute = !!student.routeId;
                   
                   return (
                     <div
@@ -193,6 +194,7 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
                         checked={isSelected}
                         onCheckedChange={() => handleToggleStudent(student.id)}
                         disabled={assignStudentsMutation.isPending || isInactive}
+                        className="touch-target"
                       />
                       <Label
                         htmlFor={`student-${student.id}`}
@@ -201,7 +203,19 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{student.name}</span>
+                          <div>
+                            <span className="font-medium">{student.name}</span>
+                            {student.grade && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                Grade {student.grade}
+                              </span>
+                            )}
+                            {hasRoute && student.routeName && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Currently on: {student.routeName}
+                              </div>
+                            )}
+                          </div>
                           {isInactive && (
                             <span className="text-xs text-muted-foreground ml-2">
                               (Inactive)
@@ -230,6 +244,7 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
             variant="outline"
             onClick={handleClose}
             disabled={assignStudentsMutation.isPending}
+            className="touch-target"
           >
             Cancel
           </Button>
@@ -242,6 +257,7 @@ export const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
               !!studentsError ||
               selectedStudentIds.size === 0
             }
+            className="touch-target"
           >
             {assignStudentsMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

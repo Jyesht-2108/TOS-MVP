@@ -98,6 +98,54 @@ export const mockStudents: Student[] = [
     routeName: undefined,
     status: 'ACTIVE',
   },
+  {
+    id: 'student-9',
+    tenantId: 'tenant-1',
+    name: 'Isabella Taylor',
+    parentUserId: 'parent-9',
+    parentName: 'Michael Taylor',
+    grade: '4',
+    section: 'B',
+    routeId: 'route-5',
+    routeName: 'Kindergarten Route A',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'student-10',
+    tenantId: 'tenant-1',
+    name: 'Lucas Anderson',
+    parentUserId: 'parent-10',
+    parentName: 'Sarah Anderson',
+    grade: '7',
+    section: 'A',
+    routeId: 'route-5',
+    routeName: 'Kindergarten Route A',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'student-11',
+    tenantId: 'tenant-1',
+    name: 'Mia Robinson',
+    parentUserId: 'parent-11',
+    parentName: 'James Robinson',
+    grade: '5',
+    section: 'C',
+    routeId: 'route-6',
+    routeName: 'High School Route B',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'student-12',
+    tenantId: 'tenant-1',
+    name: 'Elijah White',
+    parentUserId: 'parent-12',
+    parentName: 'Emily White',
+    grade: '6',
+    section: 'B',
+    routeId: 'route-6',
+    routeName: 'High School Route B',
+    status: 'ACTIVE',
+  },
 ];
 
 // Mock Drivers
@@ -109,7 +157,7 @@ export const mockDrivers: Driver[] = [
     phone: '+1-555-0101',
     licenseNumber: 'DL-2024-001',
     vehicleNumber: 'BUS-101',
-    routeId: 'route-1',
+    routeId: 'route-1', // Primary route
     routeName: 'North District Route',
     status: 'ACTIVE',
   },
@@ -201,6 +249,26 @@ export const mockRoutes: RouteResponse[] = [
     driverName: 'Michael Chen',
     studentCount: 1,
   },
+  {
+    id: 'route-5',
+    tenantId: 'tenant-1',
+    name: 'Kindergarten Route A',
+    status: 'ACTIVE',
+    createdAt: '2024-01-20T08:00:00Z',
+    updatedAt: '2024-01-20T08:00:00Z',
+    driverName: 'John Anderson',
+    studentCount: 2,
+  },
+  {
+    id: 'route-6',
+    tenantId: 'tenant-1',
+    name: 'High School Route B',
+    status: 'ACTIVE',
+    createdAt: '2024-01-22T08:00:00Z',
+    updatedAt: '2024-01-22T08:00:00Z',
+    driverName: 'John Anderson',
+    studentCount: 2,
+  },
 ];
 
 // Mock Route Students
@@ -254,9 +322,41 @@ export const mockRouteStudents: Record<string, RouteStudent[]> = {
       attendanceTotal: 22,
     },
   ],
+  'route-5': [
+    {
+      routeId: 'route-5',
+      studentId: 'student-9',
+      student: mockStudents[8],
+      attendancePresent: 20,
+      attendanceTotal: 22,
+    },
+    {
+      routeId: 'route-5',
+      studentId: 'student-10',
+      student: mockStudents[9],
+      attendancePresent: 19,
+      attendanceTotal: 22,
+    },
+  ],
+  'route-6': [
+    {
+      routeId: 'route-6',
+      studentId: 'student-11',
+      student: mockStudents[10],
+      attendancePresent: 21,
+      attendanceTotal: 22,
+    },
+    {
+      routeId: 'route-6',
+      studentId: 'student-12',
+      student: mockStudents[11],
+      attendancePresent: 22,
+      attendanceTotal: 22,
+    },
+  ],
 };
 
-// Mock Driver Assignments
+// Mock Driver Assignments - Now supports multiple routes per driver
 export const mockDriverAssignments: Record<string, RouteDriverAssignment[]> = {
   'route-1': [
     {
@@ -287,6 +387,26 @@ export const mockDriverAssignments: Record<string, RouteDriverAssignment[]> = {
       activeFrom: '2024-01-18T11:00:00Z',
       activeTo: undefined,
       driver: mockDrivers[2],
+    },
+  ],
+  'route-5': [
+    {
+      id: 'assignment-5',
+      routeId: 'route-5',
+      driverId: 'driver-1',
+      activeFrom: '2024-01-20T08:00:00Z',
+      activeTo: undefined,
+      driver: mockDrivers[0],
+    },
+  ],
+  'route-6': [
+    {
+      id: 'assignment-6',
+      routeId: 'route-6',
+      driverId: 'driver-1',
+      activeFrom: '2024-01-22T08:00:00Z',
+      activeTo: undefined,
+      driver: mockDrivers[0],
     },
   ],
 };
@@ -447,21 +567,420 @@ export const getMockActiveTrips = (): import('@/types').ActiveTrip[] => {
 // Helper function to generate mock driver activity
 export const getMockDriverActivity = (): import('@/types').DriverActivity[] => {
   const now = new Date();
+  const today = now.toISOString().split('T')[0];
   
-  return mockDrivers.map((driver, index) => {
+  return mockDrivers.map((driver) => {
     const hasActiveTrip = driver.routeId && mockRoutes.find(r => r.id === driver.routeId)?.status === 'ACTIVE';
     const lastGPSSeconds = Math.floor(Math.random() * 180); // Random 0-180 seconds
+    
+    // Count today's trips for this driver
+    const todayTrips = mockTrips.filter(t => t.driverId === driver.id && t.tripDate === today);
+    const totalTripsToday = todayTrips.length;
+    
+    // Get last trip start time
+    const lastTrip = todayTrips.length > 0 ? todayTrips[0] : null;
     
     return {
       driverId: driver.id,
       driverName: driver.name,
       vehicleNumber: driver.vehicleNumber,
       currentTripId: hasActiveTrip ? `trip-${driver.routeId}-morning` : undefined,
-      lastTripStartTime: hasActiveTrip ? new Date(now.getTime() - 30 * 60 * 1000).toISOString() : undefined,
-      lastTripEndTime: !hasActiveTrip && index % 2 === 0 ? new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() : undefined,
+      lastTripStartTime: lastTrip?.startTime,
+      lastTripEndTime: lastTrip?.endTime,
       lastGPSTimestamp: hasActiveTrip ? new Date(now.getTime() - lastGPSSeconds * 1000).toISOString() : undefined,
-      totalTripsToday: hasActiveTrip ? 1 : (index % 3),
+      totalTripsToday,
       status: hasActiveTrip ? 'ACTIVE' : (driver.status === 'ACTIVE' ? 'IDLE' : 'OFFLINE'),
     };
   });
+};
+
+// Mock Trip History Data
+export const mockTrips: import('@/types').Trip[] = [
+  // Today's trips for driver-1 (John Anderson) - Multiple routes
+  {
+    id: 'trip-001',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'PICKUP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(7, 0, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(8, 15, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 3,
+    presentStudents: 3,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-002',
+    routeId: 'route-5',
+    routeName: 'Kindergarten Route A',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'PICKUP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(8, 30, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(9, 0, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 2,
+    presentStudents: 2,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-003',
+    routeId: 'route-6',
+    routeName: 'High School Route B',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'PICKUP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(9, 15, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(10, 0, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 4,
+    presentStudents: 4,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-004',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'DROP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(15, 0, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(16, 15, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 3,
+    presentStudents: 3,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-005',
+    routeId: 'route-5',
+    routeName: 'Kindergarten Route A',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'DROP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(12, 30, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(13, 0, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 2,
+    presentStudents: 2,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-006',
+    routeId: 'route-6',
+    routeName: 'High School Route B',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'DROP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(16, 30, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(17, 30, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 4,
+    presentStudents: 3,
+    absentStudents: 1,
+  },
+  
+  // Yesterday's trips for driver-1
+  {
+    id: 'trip-007',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'PICKUP',
+    tripDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    startTime: new Date(Date.now() - 86400000 + 7 * 3600000).toISOString(),
+    endTime: new Date(Date.now() - 86400000 + 8.25 * 3600000).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 3,
+    presentStudents: 2,
+    absentStudents: 1,
+  },
+  {
+    id: 'trip-008',
+    routeId: 'route-5',
+    routeName: 'Kindergarten Route A',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    vehicleNumber: 'BUS-101',
+    tripType: 'PICKUP',
+    tripDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    startTime: new Date(Date.now() - 86400000 + 8.5 * 3600000).toISOString(),
+    endTime: new Date(Date.now() - 86400000 + 9 * 3600000).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 2,
+    presentStudents: 2,
+    absentStudents: 0,
+  },
+  
+  // Today's trips for driver-2 (Sarah Thompson)
+  {
+    id: 'trip-009',
+    routeId: 'route-2',
+    routeName: 'South District Route',
+    driverId: 'driver-2',
+    driverName: 'Sarah Thompson',
+    vehicleNumber: 'BUS-102',
+    tripType: 'PICKUP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(7, 15, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(8, 30, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 2,
+    presentStudents: 2,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-010',
+    routeId: 'route-2',
+    routeName: 'South District Route',
+    driverId: 'driver-2',
+    driverName: 'Sarah Thompson',
+    vehicleNumber: 'BUS-102',
+    tripType: 'DROP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(15, 30, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(16, 45, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 2,
+    presentStudents: 2,
+    absentStudents: 0,
+  },
+  
+  // Today's trips for driver-3 (Michael Chen)
+  {
+    id: 'trip-011',
+    routeId: 'route-4',
+    routeName: 'West District Route',
+    driverId: 'driver-3',
+    driverName: 'Michael Chen',
+    vehicleNumber: 'BUS-103',
+    tripType: 'PICKUP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(7, 30, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(8, 45, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 1,
+    presentStudents: 1,
+    absentStudents: 0,
+  },
+  {
+    id: 'trip-012',
+    routeId: 'route-4',
+    routeName: 'West District Route',
+    driverId: 'driver-3',
+    driverName: 'Michael Chen',
+    vehicleNumber: 'BUS-103',
+    tripType: 'DROP',
+    tripDate: new Date().toISOString().split('T')[0],
+    startTime: new Date(new Date().setHours(15, 15, 0, 0)).toISOString(),
+    endTime: new Date(new Date().setHours(16, 30, 0, 0)).toISOString(),
+    status: 'COMPLETED',
+    totalStudents: 1,
+    presentStudents: 1,
+    absentStudents: 0,
+  },
+];
+
+// Helper function to get all routes assigned to a driver
+export const getDriverRoutes = (driverId: string): RouteResponse[] => {
+  const driverRoutes: RouteResponse[] = [];
+  
+  Object.entries(mockDriverAssignments).forEach(([routeId, assignments]) => {
+    const activeAssignment = assignments.find(a => a.driverId === driverId && !a.activeTo);
+    if (activeAssignment) {
+      const route = mockRoutes.find(r => r.id === routeId);
+      if (route) {
+        driverRoutes.push(route);
+      }
+    }
+  });
+  
+  return driverRoutes;
+};
+
+// Helper function to get driver trip history with filters
+export const getDriverTrips = (
+  driverId: string,
+  filters?: import('@/types').DriverTripFilters
+): import('@/types').Trip[] => {
+  let trips = mockTrips.filter(trip => trip.driverId === driverId);
+  
+  // Apply filters
+  if (filters?.startDate) {
+    trips = trips.filter(trip => trip.tripDate >= filters.startDate!);
+  }
+  
+  if (filters?.endDate) {
+    trips = trips.filter(trip => trip.tripDate <= filters.endDate!);
+  }
+  
+  if (filters?.routeId) {
+    trips = trips.filter(trip => trip.routeId === filters.routeId);
+  }
+  
+  if (filters?.tripType) {
+    trips = trips.filter(trip => trip.tripType === filters.tripType);
+  }
+  
+  // Sort by date and time descending (most recent first)
+  return trips.sort((a, b) => {
+    const dateCompare = b.tripDate.localeCompare(a.tripDate);
+    if (dateCompare !== 0) return dateCompare;
+    return b.startTime.localeCompare(a.startTime);
+  });
+};
+
+// Mock Student Attendance Records
+export const mockStudentAttendance: import('@/types').StudentAttendanceRecord[] = [
+  // Emma Johnson (student-1) - North District Route
+  {
+    id: 'att-001',
+    studentId: 'student-1',
+    studentName: 'Emma Johnson',
+    tripId: 'trip-001',
+    tripDate: new Date().toISOString().split('T')[0],
+    tripType: 'PICKUP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(new Date().setHours(7, 30, 0, 0)).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-002',
+    studentId: 'student-1',
+    studentName: 'Emma Johnson',
+    tripId: 'trip-004',
+    tripDate: new Date().toISOString().split('T')[0],
+    tripType: 'DROP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(new Date().setHours(15, 30, 0, 0)).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-003',
+    studentId: 'student-1',
+    studentName: 'Emma Johnson',
+    tripId: 'trip-007',
+    tripDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    tripType: 'PICKUP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'ABSENT',
+    markedAt: new Date(Date.now() - 86400000 + 7.5 * 3600000).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-004',
+    studentId: 'student-1',
+    studentName: 'Emma Johnson',
+    tripId: 'trip-013',
+    tripDate: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    tripType: 'PICKUP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(Date.now() - 2 * 86400000 + 7 * 3600000).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-005',
+    studentId: 'student-1',
+    studentName: 'Emma Johnson',
+    tripId: 'trip-014',
+    tripDate: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    tripType: 'DROP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(Date.now() - 2 * 86400000 + 15 * 3600000).toISOString(),
+    markedBy: 'driver-1',
+  },
+  
+  // Liam Smith (student-2) - North District Route
+  {
+    id: 'att-006',
+    studentId: 'student-2',
+    studentName: 'Liam Smith',
+    tripId: 'trip-001',
+    tripDate: new Date().toISOString().split('T')[0],
+    tripType: 'PICKUP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(new Date().setHours(7, 35, 0, 0)).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-007',
+    studentId: 'student-2',
+    studentName: 'Liam Smith',
+    tripId: 'trip-004',
+    tripDate: new Date().toISOString().split('T')[0],
+    tripType: 'DROP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(new Date().setHours(15, 35, 0, 0)).toISOString(),
+    markedBy: 'driver-1',
+  },
+  {
+    id: 'att-008',
+    studentId: 'student-2',
+    studentName: 'Liam Smith',
+    tripId: 'trip-007',
+    tripDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    tripType: 'PICKUP',
+    routeId: 'route-1',
+    routeName: 'North District Route',
+    status: 'PRESENT',
+    markedAt: new Date(Date.now() - 86400000 + 7.5 * 3600000).toISOString(),
+    markedBy: 'driver-1',
+  },
+];
+
+// Helper function to get student attendance summary
+export const getStudentAttendanceSummary = (studentId: string): import('@/types').StudentAttendanceSummary => {
+  const records = mockStudentAttendance.filter(att => att.studentId === studentId);
+  
+  const totalTrips = records.length;
+  const presentCount = records.filter(r => r.status === 'PRESENT').length;
+  const absentCount = records.filter(r => r.status === 'ABSENT').length;
+  const pendingCount = records.filter(r => r.status === 'PENDING').length;
+  const attendancePercentage = totalTrips > 0 ? Math.round((presentCount / totalTrips) * 100) : 0;
+  
+  // Sort by date descending (most recent first)
+  const recentRecords = [...records].sort((a, b) => {
+    const dateCompare = b.tripDate.localeCompare(a.tripDate);
+    if (dateCompare !== 0) return dateCompare;
+    return b.tripType.localeCompare(a.tripType);
+  }).slice(0, 10); // Last 10 records
+  
+  return {
+    studentId,
+    totalTrips,
+    presentCount,
+    absentCount,
+    pendingCount,
+    attendancePercentage,
+    recentRecords,
+  };
 };

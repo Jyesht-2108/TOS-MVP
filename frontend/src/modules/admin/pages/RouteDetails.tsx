@@ -12,10 +12,14 @@ import {
   User,
   MapPin,
   Navigation,
+  AlertTriangle,
+  Loader2,
+  Search,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -24,6 +28,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
 import { routesService } from '@/services/routes.service';
@@ -41,6 +53,9 @@ export const RouteDetails: React.FC = () => {
   const [isAssignDriverDialogOpen, setIsAssignDriverDialogOpen] = useState(false);
   const [isAssignStudentsDialogOpen, setIsAssignStudentsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRemoveStudentDialogOpen, setIsRemoveStudentDialogOpen] = useState(false);
+  const [studentToRemove, setStudentToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch route details
   const {
@@ -95,6 +110,19 @@ export const RouteDetails: React.FC = () => {
   // Check if driver has an active trip
   const hasActiveTrip = driverActivity?.status === 'ACTIVE' && !!driverActivity?.currentTripId;
 
+  // Filter students by search query
+  const filteredStudents = React.useMemo(() => {
+    if (!students) return [];
+    
+    if (!searchQuery) return students;
+    
+    const query = searchQuery.toLowerCase();
+    return students.filter(routeStudent => 
+      routeStudent.student?.name.toLowerCase().includes(query) ||
+      routeStudent.student?.status.toLowerCase().includes(query)
+    );
+  }, [students, searchQuery]);
+
   // Remove student mutation
   const removeStudentMutation = useMutation({
     mutationFn: ({ studentId }: { studentId: string }) =>
@@ -102,7 +130,10 @@ export const RouteDetails: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['route-students', routeId] });
       queryClient.invalidateQueries({ queryKey: ['route', routeId] });
+      queryClient.invalidateQueries({ queryKey: ['routes'] });
       toast.success('Student removed from route successfully');
+      setIsRemoveStudentDialogOpen(false);
+      setStudentToRemove(null);
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'Failed to remove student');
@@ -110,12 +141,13 @@ export const RouteDetails: React.FC = () => {
   });
 
   const handleRemoveStudent = (studentId: string, studentName: string) => {
-    if (
-      window.confirm(
-        `Are you sure you want to remove "${studentName}" from this route?`
-      )
-    ) {
-      removeStudentMutation.mutate({ studentId });
+    setStudentToRemove({ id: studentId, name: studentName });
+    setIsRemoveStudentDialogOpen(true);
+  };
+
+  const confirmRemoveStudent = () => {
+    if (studentToRemove) {
+      removeStudentMutation.mutate({ studentId: studentToRemove.id });
     }
   };
 
@@ -284,7 +316,10 @@ export const RouteDetails: React.FC = () => {
           {isLoadingDrivers ? (
             <Skeleton className="h-20 w-full" />
           ) : activeDriver ? (
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
+            <div 
+              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(`/admin/drivers/${activeDriver.driverId}`)}
+            >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="h-6 w-6 text-primary" />
               </div>
@@ -304,12 +339,16 @@ export const RouteDetails: React.FC = () => {
                     </span>
                   </p>
                 )}
+                <p className="text-xs text-primary mt-1">Click to view driver details</p>
               </div>
               <div className="flex flex-col gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleTrackLiveRoute}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTrackLiveRoute();
+                  }}
                   disabled={!hasActiveTrip}
                   title={!hasActiveTrip ? 'Tracking is only available when the driver has an active trip' : 'Track live location'}
                 >
@@ -351,13 +390,26 @@ export const RouteDetails: React.FC = () => {
                 Students currently assigned to this route
               </CardDescription>
             </div>
-            <Button onClick={handleAssignStudents}>
+            <Button onClick={handleAssignStudents} className="touch-target">
               <Users className="mr-2 h-4 w-4" />
               Assign Students
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by student name or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 touch-target"
+              />
+            </div>
+          </div>
+
           {isLoadingStudents ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
@@ -365,6 +417,15 @@ export const RouteDetails: React.FC = () => {
               ))}
             </div>
           ) : students && students.length > 0 ? (
+            filteredStudents.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-1">No students found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search query
+                </p>
+              </div>
+            ) : (
             <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -376,7 +437,7 @@ export const RouteDetails: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((routeStudent) => {
+                  {filteredStudents.map((routeStudent) => {
                     const attendancePresent = routeStudent.attendancePresent ?? 0;
                     const attendanceTotal = routeStudent.attendanceTotal ?? 0;
                     const attendancePercentage = attendanceTotal > 0 
@@ -384,7 +445,11 @@ export const RouteDetails: React.FC = () => {
                       : 0;
                     
                     return (
-                      <TableRow key={routeStudent.studentId}>
+                      <TableRow 
+                        key={routeStudent.studentId}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/admin/students/${routeStudent.studentId}`)}
+                      >
                         <TableCell className="font-medium">
                           {routeStudent.student?.name || 'Unknown Student'}
                         </TableCell>
@@ -411,13 +476,15 @@ export const RouteDetails: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleRemoveStudent(
                                 routeStudent.studentId,
                                 routeStudent.student?.name || 'this student'
-                              )
-                            }
+                              );
+                            }}
                             disabled={removeStudentMutation.isPending}
+                            className="touch-target text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Remove
@@ -429,6 +496,7 @@ export const RouteDetails: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
+            )
           ) : (
             <div className="text-center py-8">
               <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -438,7 +506,7 @@ export const RouteDetails: React.FC = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 This route doesn't have any students assigned yet
               </p>
-              <Button onClick={handleAssignStudents}>
+              <Button onClick={handleAssignStudents} className="touch-target">
                 <Users className="mr-2 h-4 w-4" />
                 Assign Students
               </Button>
@@ -474,6 +542,48 @@ export const RouteDetails: React.FC = () => {
           route={route}
         />
       )}
+
+      {/* Remove Student Confirmation Dialog */}
+      <Dialog open={isRemoveStudentDialogOpen} onOpenChange={setIsRemoveStudentDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Remove Student
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove "{studentToRemove?.name}" from this route? 
+              This action will unassign the student from the route.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsRemoveStudentDialogOpen(false);
+                setStudentToRemove(null);
+              }}
+              disabled={removeStudentMutation.isPending}
+              className="touch-target"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmRemoveStudent}
+              disabled={removeStudentMutation.isPending}
+              className="touch-target"
+            >
+              {removeStudentMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Remove Student
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
     </AnimatedPage>
   );

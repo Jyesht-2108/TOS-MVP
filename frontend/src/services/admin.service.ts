@@ -182,6 +182,78 @@ class AdminService {
   }
 
   /**
+   * Fetch routes assigned to a specific driver
+   * @param driverId - The driver ID
+   * @returns Promise with array of routes
+   */
+  async fetchDriverRoutes(driverId: string): Promise<import('@/types').RouteResponse[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getDriverRoutes } = await import('@/lib/mockData');
+      return getDriverRoutes(driverId);
+    }
+
+    try {
+      const response = await api.get<import('@/types').RouteResponse[]>(`/admin/drivers/${driverId}/routes`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch driver routes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch trip history for a specific driver
+   * @param driverId - The driver ID
+   * @param filters - Optional filters for date, route, and trip type
+   * @returns Promise with array of trips
+   */
+  async fetchDriverTrips(
+    driverId: string,
+    filters?: import('@/types').DriverTripFilters
+  ): Promise<import('@/types').Trip[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getDriverTrips } = await import('@/lib/mockData');
+      return getDriverTrips(driverId, filters);
+    }
+
+    try {
+      const response = await api.get<import('@/types').Trip[]>(`/admin/drivers/${driverId}/trips`, {
+        params: filters,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch driver trips:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch attendance summary for a specific student
+   * @param studentId - The student ID
+   * @returns Promise with attendance summary
+   */
+  async fetchStudentAttendance(studentId: string): Promise<import('@/types').StudentAttendanceSummary> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getStudentAttendanceSummary } = await import('@/lib/mockData');
+      return getStudentAttendanceSummary(studentId);
+    }
+
+    try {
+      const response = await api.get<import('@/types').StudentAttendanceSummary>(`/admin/students/${studentId}/attendance`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch student attendance:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch trip details by trip ID
    * @param tripId - The trip ID
    * @returns Promise with trip details

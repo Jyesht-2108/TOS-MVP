@@ -15,23 +15,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { routesService } from '@/services/routes.service';
-import { RouteStatus, RouteResponse } from '@/types';
+import { RouteResponse } from '@/types';
 import { toast } from 'sonner';
 
 // Zod validation schema
 const createRouteSchema = z.object({
   name: z.string().min(1, 'Route name is required').max(255, 'Route name is too long'),
-  status: z.enum(['ACTIVE', 'INACTIVE'], {
-    required_error: 'Status is required',
-  }),
 });
 
 type CreateRouteFormData = z.infer<typeof createRouteSchema>;
@@ -54,28 +44,22 @@ export const CreateRouteDialog: React.FC<CreateRouteDialogProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    watch,
     reset,
   } = useForm<CreateRouteFormData>({
     resolver: zodResolver(createRouteSchema),
     defaultValues: {
       name: route?.name || '',
-      status: route?.status || 'ACTIVE',
     },
   });
 
   // Update form when route changes
   React.useEffect(() => {
     if (route) {
-      setValue('name', route.name);
-      setValue('status', route.status);
+      reset({ name: route.name });
     } else {
       reset();
     }
-  }, [route, setValue, reset]);
-
-  const statusValue = watch('status');
+  }, [route, reset]);
 
   // Create/Update route mutation
   const saveRouteMutation = useMutation({
@@ -108,7 +92,12 @@ export const CreateRouteDialog: React.FC<CreateRouteDialogProps> = ({
   });
 
   const onSubmit = (data: CreateRouteFormData) => {
-    saveRouteMutation.mutate(data);
+    // Always set status to ACTIVE for new routes
+    const submitData = {
+      ...data,
+      status: 'ACTIVE' as const,
+    };
+    saveRouteMutation.mutate(submitData);
   };
 
   // Reset form when dialog closes
@@ -139,35 +128,12 @@ export const CreateRouteDialog: React.FC<CreateRouteDialogProps> = ({
             </Label>
             <Input
               id="name"
-              placeholder="Enter route name"
+              placeholder="Enter route name (e.g., North District Route)"
               {...register('name')}
               disabled={saveRouteMutation.isPending}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
-          </div>
-
-          {/* Status Field */}
-          <div className="space-y-2">
-            <Label htmlFor="status">
-              Status <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={statusValue}
-              onValueChange={(value) => setValue('status', value as RouteStatus)}
-              disabled={saveRouteMutation.isPending}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.status && (
-              <p className="text-sm text-destructive">{errors.status.message}</p>
             )}
           </div>
 

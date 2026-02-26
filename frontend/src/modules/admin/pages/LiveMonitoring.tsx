@@ -12,10 +12,12 @@ import {
   MapPin,
   Phone,
   Car,
+  Search,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -33,6 +35,8 @@ import { formatDistanceToNow } from 'date-fns';
 export const LiveMonitoring: React.FC = () => {
   const navigate = useNavigate();
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [tripsSearchQuery, setTripsSearchQuery] = useState('');
+  const [driversSearchQuery, setDriversSearchQuery] = useState('');
 
   // Fetch active trips
   const {
@@ -106,6 +110,35 @@ export const LiveMonitoring: React.FC = () => {
     }
   };
 
+  // Filter active trips by search query
+  const filteredActiveTrips = React.useMemo(() => {
+    if (!activeTrips) return [];
+    
+    if (!tripsSearchQuery) return activeTrips;
+    
+    const query = tripsSearchQuery.toLowerCase();
+    return activeTrips.filter(trip => 
+      trip.routeName.toLowerCase().includes(query) ||
+      trip.vehicleNumber?.toLowerCase().includes(query) ||
+      trip.driverName.toLowerCase().includes(query) ||
+      trip.driverPhone?.toLowerCase().includes(query)
+    );
+  }, [activeTrips, tripsSearchQuery]);
+
+  // Filter driver activity by search query
+  const filteredDriverActivity = React.useMemo(() => {
+    if (!driverActivity) return [];
+    
+    if (!driversSearchQuery) return driverActivity;
+    
+    const query = driversSearchQuery.toLowerCase();
+    return driverActivity.filter(driver => 
+      driver.driverName.toLowerCase().includes(query) ||
+      driver.vehicleNumber?.toLowerCase().includes(query) ||
+      driver.status.toLowerCase().includes(query)
+    );
+  }, [driverActivity, driversSearchQuery]);
+
   return (
     <AnimatedPage>
       <div className="space-y-6">
@@ -154,6 +187,19 @@ export const LiveMonitoring: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by route, vehicle, driver, or phone..."
+                  value={tripsSearchQuery}
+                  onChange={(e) => setTripsSearchQuery(e.target.value)}
+                  className="pl-9 touch-target"
+                />
+              </div>
+            </div>
+
             {isLoadingTrips ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
@@ -175,6 +221,14 @@ export const LiveMonitoring: React.FC = () => {
                   There are no active trips at the moment.
                 </p>
               </div>
+            ) : filteredActiveTrips.length === 0 ? (
+              <div className="text-center py-12">
+                <Navigation className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No trips found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search query
+                </p>
+              </div>
             ) : (
               <div className="rounded-md border overflow-x-auto">
                 <Table>
@@ -189,7 +243,7 @@ export const LiveMonitoring: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeTrips.map((trip) => (
+                    {filteredActiveTrips.map((trip) => (
                       <TableRow key={trip.tripId}>
                         <TableCell>
                           <div>
@@ -256,6 +310,19 @@ export const LiveMonitoring: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by driver name, vehicle, or status..."
+                  value={driversSearchQuery}
+                  onChange={(e) => setDriversSearchQuery(e.target.value)}
+                  className="pl-9 touch-target"
+                />
+              </div>
+            </div>
+
             {isLoadingDrivers ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -267,6 +334,14 @@ export const LiveMonitoring: React.FC = () => {
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground">
                   No driver activity data available.
+                </p>
+              </div>
+            ) : filteredDriverActivity.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No drivers found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search query
                 </p>
               </div>
             ) : (
@@ -281,7 +356,7 @@ export const LiveMonitoring: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {driverActivity.map((driver) => (
+                    {filteredDriverActivity.map((driver) => (
                       <TableRow key={driver.driverId}>
                         <TableCell>
                           <div>

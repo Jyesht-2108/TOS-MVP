@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, GraduationCap, User, Route as RouteIcon, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -26,9 +28,11 @@ import { adminService } from '@/services/admin.service';
 import { Student } from '@/types';
 
 export const Students: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [routeFilter, setRouteFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
+  const [viewMode, setViewMode] = useState<'all' | 'by-grade' | 'by-route'>('all');
 
   // Fetch students
   const { 
@@ -72,6 +76,64 @@ export const Students: React.FC = () => {
     return filtered;
   }, [students, searchQuery, statusFilter, routeFilter]);
 
+  // Group students by grade
+  const studentsByGrade = React.useMemo(() => {
+    if (!filteredStudents) return {};
+    
+    const grouped: Record<string, Student[]> = {};
+    
+    filteredStudents.forEach(student => {
+      const grade = student.grade || 'Unassigned';
+      if (!grouped[grade]) {
+        grouped[grade] = [];
+      }
+      grouped[grade].push(student);
+    });
+    
+    // Sort grades
+    const sortedGrades = Object.keys(grouped).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b, undefined, { numeric: true });
+    });
+    
+    const sortedGrouped: Record<string, Student[]> = {};
+    sortedGrades.forEach(grade => {
+      sortedGrouped[grade] = grouped[grade];
+    });
+    
+    return sortedGrouped;
+  }, [filteredStudents]);
+
+  // Group students by route
+  const studentsByRoute = React.useMemo(() => {
+    if (!filteredStudents) return {};
+    
+    const grouped: Record<string, Student[]> = {};
+    
+    filteredStudents.forEach(student => {
+      const route = student.routeName || 'Unassigned';
+      if (!grouped[route]) {
+        grouped[route] = [];
+      }
+      grouped[route].push(student);
+    });
+    
+    // Sort routes with Unassigned at the end
+    const sortedRoutes = Object.keys(grouped).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    });
+    
+    const sortedGrouped: Record<string, Student[]> = {};
+    sortedRoutes.forEach(route => {
+      sortedGrouped[route] = grouped[route];
+    });
+    
+    return sortedGrouped;
+  }, [filteredStudents]);
+
   // Calculate statistics
   const stats = React.useMemo(() => {
     if (!students) return { total: 0, active: 0, assigned: 0, unassigned: 0 };
@@ -87,6 +149,77 @@ export const Students: React.FC = () => {
   const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
     return status === 'ACTIVE' ? 'default' : 'secondary';
   };
+
+  // Render student table
+  const renderStudentTable = (studentsList: Student[]) => (
+    <div className="rounded-md border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[180px]">Student</TableHead>
+            <TableHead className="min-w-[100px]">Grade</TableHead>
+            <TableHead className="min-w-[150px]">Parent</TableHead>
+            <TableHead className="min-w-[180px]">Assigned Route</TableHead>
+            <TableHead className="min-w-[100px]">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {studentsList.map((student) => (
+            <TableRow 
+              key={student.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => navigate(`/admin/students/${student.id}`)}
+            >
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="font-medium">{student.name}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                {student.grade && student.section ? (
+                  <span className="text-sm">
+                    Grade {student.grade}-{student.section}
+                  </span>
+                ) : student.grade ? (
+                  <span className="text-sm">Grade {student.grade}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">Not set</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {student.parentName ? (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{student.parentName}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">No parent</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {student.routeName ? (
+                  <div className="flex items-center gap-2">
+                    <RouteIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{student.routeName}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">Unassigned</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant={getStatusBadgeVariant(student.status)}>
+                  {student.status}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   return (
     <AnimatedPage>
@@ -188,9 +321,9 @@ export const Students: React.FC = () => {
         {/* Students List */}
         <Card>
           <CardHeader>
-            <CardTitle>All Students</CardTitle>
+            <CardTitle>Students List</CardTitle>
             <CardDescription>
-              View and manage all students in your system
+              View students organized by different criteria
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -238,7 +371,7 @@ export const Students: React.FC = () => {
               </Select>
             </div>
 
-            {/* Table */}
+            {/* Tabs for different views */}
             {isLoading ? (
               <div className="space-y-3">
                 {[...Array(8)].map((_, i) => (
@@ -264,67 +397,64 @@ export const Students: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[180px]">Student</TableHead>
-                      <TableHead className="min-w-[100px]">Grade</TableHead>
-                      <TableHead className="min-w-[150px]">Parent</TableHead>
-                      <TableHead className="min-w-[180px]">Assigned Route</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <GraduationCap className="h-4 w-4 text-primary" />
-                            </div>
-                            <span className="font-medium">{student.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {student.grade && student.section ? (
-                            <span className="text-sm">
-                              Grade {student.grade}-{student.section}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground italic">Not set</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {student.parentName ? (
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{student.parentName}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground italic">No parent</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {student.routeName ? (
-                            <div className="flex items-center gap-2">
-                              <RouteIcon className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{student.routeName}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground italic">Unassigned</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusBadgeVariant(student.status)}>
-                            {student.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'all' | 'by-grade' | 'by-route')} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger value="all">All Students</TabsTrigger>
+                  <TabsTrigger value="by-grade">By Grade</TabsTrigger>
+                  <TabsTrigger value="by-route">By Route</TabsTrigger>
+                </TabsList>
+
+                {/* All Students View */}
+                <TabsContent value="all" className="mt-0">
+                  {renderStudentTable(filteredStudents)}
+                </TabsContent>
+
+                {/* By Grade View */}
+                <TabsContent value="by-grade" className="mt-0 space-y-6">
+                  {Object.entries(studentsByGrade).map(([grade, gradeStudents]) => (
+                    <motion.div
+                      key={grade}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <GraduationCap className="h-5 w-5 text-primary" />
+                          {grade === 'Unassigned' ? 'No Grade Assigned' : `Grade ${grade}`}
+                        </h3>
+                        <Badge variant="secondary" className="text-sm">
+                          {gradeStudents.length} {gradeStudents.length === 1 ? 'student' : 'students'}
+                        </Badge>
+                      </div>
+                      {renderStudentTable(gradeStudents)}
+                    </motion.div>
+                  ))}
+                </TabsContent>
+
+                {/* By Route View */}
+                <TabsContent value="by-route" className="mt-0 space-y-6">
+                  {Object.entries(studentsByRoute).map(([route, routeStudents]) => (
+                    <motion.div
+                      key={route}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <RouteIcon className="h-5 w-5 text-primary" />
+                          {route === 'Unassigned' ? 'No Route Assigned' : route}
+                        </h3>
+                        <Badge variant="secondary" className="text-sm">
+                          {routeStudents.length} {routeStudents.length === 1 ? 'student' : 'students'}
+                        </Badge>
+                      </div>
+                      {renderStudentTable(routeStudents)}
+                    </motion.div>
+                  ))}
+                </TabsContent>
+              </Tabs>
             )}
           </CardContent>
         </Card>

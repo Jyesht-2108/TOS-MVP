@@ -216,3 +216,57 @@ export interface AttendanceCorrection {
   newStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
   reason: string;
 }
+
+// Driver Trip History Types
+export type TripType = 'PICKUP' | 'DROP';
+export type TripStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'PENDING';
+
+export interface Trip {
+  id: string;
+  routeId: string;
+  routeName: string;
+  driverId: string;
+  driverName: string;
+  vehicleNumber?: string;
+  tripType: TripType;
+  tripDate: string;
+  startTime: string;
+  endTime?: string;
+  status: TripStatus;
+  totalStudents: number;
+  presentStudents: number;
+  absentStudents: number;
+}
+
+export interface DriverTripFilters {
+  startDate?: string;
+  endDate?: string;
+  routeId?: string;
+  tripType?: TripType;
+}
+
+// Student Attendance Types
+export interface StudentAttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  tripId: string;
+  tripDate: string;
+  tripType: TripType;
+  routeId: string;
+  routeName: string;
+  status: AttendanceStatus;
+  markedAt?: string;
+  markedBy?: string;
+}
+
+export interface StudentAttendanceSummary {
+  studentId: string;
+  totalTrips: number;
+  presentCount: number;
+  absentCount: number;
+  pendingCount: number;
+  attendancePercentage: number;
+  recentRecords: StudentAttendanceRecord[];
+}
