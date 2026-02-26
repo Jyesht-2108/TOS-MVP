@@ -317,9 +317,10 @@ export const TripDetails: React.FC = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
-                              variant="ghost"
+                              variant="default"
                               size="sm"
                               onClick={() => handleCorrectAttendance(attendance)}
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               Correct
