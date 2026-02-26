@@ -193,6 +193,28 @@ export const TripDetails: React.FC = () => {
                       {format(new Date(trip.startTime), 'hh:mm a')}
                     </span>
                   </div>
+                  {trip.estimatedEndTime && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Est. End Time</span>
+                      <span className="font-medium">
+                        {format(new Date(trip.estimatedEndTime), 'hh:mm a')}
+                      </span>
+                    </div>
+                  )}
+                  {trip.averageTripDuration && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Avg. Duration</span>
+                      <span className="font-medium">{trip.averageTripDuration} minutes</span>
+                    </div>
+                  )}
+                  {trip.endTime && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Actual End Time</span>
+                      <span className="font-medium">
+                        {format(new Date(trip.endTime), 'hh:mm a')}
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -533,6 +533,13 @@ export const getMockActiveTrips = (): import('@/types').ActiveTrip[] => {
       const absentStudents = attendance.filter(a => a.status === 'ABSENT').length;
       const pendingStudents = attendance.filter(a => a.status === 'PENDING').length;
 
+      // Calculate average trip duration (mock: 45-60 minutes)
+      const averageTripDuration = 45 + Math.floor(Math.random() * 15);
+      
+      // Calculate estimated end time based on start time + average duration
+      const startTime = new Date(now.getTime() - 30 * 60 * 1000); // Started 30 mins ago
+      const estimatedEndTime = new Date(startTime.getTime() + averageTripDuration * 60 * 1000).toISOString();
+
       trips.push({
         tripId: `trip-${route.id}-morning`,
         routeId: route.id,
@@ -542,7 +549,9 @@ export const getMockActiveTrips = (): import('@/types').ActiveTrip[] => {
         driverName: driver.name,
         driverPhone: driver.phone,
         tripType: 'MORNING',
-        startTime: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // Started 30 mins ago
+        startTime: startTime.toISOString(),
+        estimatedEndTime,
+        averageTripDuration,
         currentLocation: {
           latitude: 40.7128 + (index * 0.05),
           longitude: -74.0060 + (index * 0.05),

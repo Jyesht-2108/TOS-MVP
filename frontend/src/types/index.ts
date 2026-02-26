@@ -174,6 +174,8 @@ export interface ActiveTrip {
   tripType: 'MORNING' | 'EVENING';
   startTime: string;
   endTime?: string;
+  estimatedEndTime?: string;
+  averageTripDuration?: number; // in minutes
   currentLocation?: BusLocation;
   lastGPSPing: string;
   gpsHealthStatus: 'HEALTHY' | 'WARNING' | 'STALE';
