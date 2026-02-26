@@ -284,7 +284,7 @@ export const LiveMonitoring: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={() => navigate(`/admin/trips/${trip.tripId}`)}
                           >

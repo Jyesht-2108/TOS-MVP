@@ -5,9 +5,7 @@ import { motion } from 'framer-motion';
 import { 
   Plus, 
   Search, 
-  MoreHorizontal, 
   Eye, 
-  Edit, 
   UserPlus, 
   Users, 
   Trash2 
@@ -24,14 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -54,7 +44,6 @@ export const Routes: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | RouteStatus>('ALL');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAssignDriverDialogOpen, setIsAssignDriverDialogOpen] = useState(false);
   const [isAssignStudentsDialogOpen, setIsAssignStudentsDialogOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<RouteResponse | null>(null);
@@ -102,11 +91,6 @@ export const Routes: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete route "${routeName}"?`)) {
       deleteRouteMutation.mutate(routeId);
     }
-  };
-
-  const handleEditRoute = (route: RouteResponse) => {
-    setSelectedRoute(route);
-    setIsEditDialogOpen(true);
   };
 
   const handleAssignDriver = (route: RouteResponse) => {
@@ -220,11 +204,11 @@ export const Routes: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[150px]">Route Name</TableHead>
-                    <TableHead className="min-w-[100px]">Status</TableHead>
-                    <TableHead className="min-w-[150px]">Driver</TableHead>
-                    <TableHead className="min-w-[100px]">Students</TableHead>
-                    <TableHead className="text-right min-w-[80px]">Actions</TableHead>
+                    <TableHead className="w-[20%]">Route Name</TableHead>
+                    <TableHead className="w-[12%]">Status</TableHead>
+                    <TableHead className="w-[18%]">Driver</TableHead>
+                    <TableHead className="w-[12%]">Students</TableHead>
+                    <TableHead className="w-[38%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -247,44 +231,45 @@ export const Routes: React.FC = () => {
                           <span>{route.studentCount}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate(`/admin/routes/${route.id}`)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditRoute(route)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Route
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleAssignDriver(route)}>
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Assign Driver
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleAssignStudents(route)}>
-                              <Users className="mr-2 h-4 w-4" />
-                              Assign Students
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteRoute(route.id, route.name)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <TableCell>
+                        <div className="flex items-center gap-3 justify-start">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => navigate(`/admin/routes/${route.id}`)}
+                            className="min-w-[85px]"
+                          >
+                            <Eye className="mr-1.5 h-4 w-4" />
+                            View
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleAssignDriver(route)}
+                            className="min-w-[95px] bg-blue-600 hover:bg-blue-700"
+                          >
+                            <UserPlus className="mr-1.5 h-4 w-4" />
+                            Driver
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleAssignStudents(route)}
+                            className="min-w-[110px] bg-green-600 hover:bg-green-700"
+                          >
+                            <Users className="mr-1.5 h-4 w-4" />
+                            Students
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteRoute(route.id, route.name)}
+                            className="min-w-[90px]"
+                          >
+                            <Trash2 className="mr-1.5 h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -300,15 +285,6 @@ export const Routes: React.FC = () => {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
-
-      {/* Edit Route Dialog */}
-      {selectedRoute && (
-        <CreateRouteDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          route={selectedRoute}
-        />
-      )}
 
       {/* Assign Driver Dialog */}
       {selectedRoute && (
