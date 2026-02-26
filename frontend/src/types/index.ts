@@ -298,3 +298,29 @@ export interface StudentFeesSummary {
   currency: string;
   fees: TransportFee[];
 }
+
+// Driver Attendance Types
+export type DriverAttendanceStatus = 'PRESENT' | 'ABSENT' | 'ON_LEAVE';
+
+export interface DriverAttendanceRecord {
+  id: string;
+  driverId: string;
+  driverName: string;
+  date: string;
+  status: DriverAttendanceStatus;
+  checkInTime?: string;
+  checkOutTime?: string;
+  remarks?: string;
+  markedBy?: string;
+  markedAt?: string;
+}
+
+export interface DriverAttendanceSummary {
+  driverId: string;
+  totalDays: number;
+  presentCount: number;
+  absentCount: number;
+  leaveCount: number;
+  attendancePercentage: number;
+  recentRecords: DriverAttendanceRecord[];
+}

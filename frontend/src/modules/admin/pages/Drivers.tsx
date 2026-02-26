@@ -2,7 +2,19 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Phone, User, Truck, Route as RouteIcon, CreditCard, Car } from 'lucide-react';
+import { 
+  Search, 
+  Phone, 
+  User, 
+  Truck, 
+  Route as RouteIcon, 
+  CreditCard, 
+  Car,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +36,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
 import { adminService } from '@/services/admin.service';
-import { Driver } from '@/types';
+import { Driver, DriverAttendanceStatus } from '@/types';
+import { format } from 'date-fns';
 
 export const Drivers: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +53,16 @@ export const Drivers: React.FC = () => {
   } = useQuery<Driver[]>({
     queryKey: ['drivers'],
     queryFn: () => adminService.fetchDrivers(),
+  });
+
+  // Fetch today's attendance
+  const {
+    data: todayAttendance,
+    isLoading: isLoadingAttendance,
+  } = useQuery({
+    queryKey: ['todayDriverAttendance'],
+    queryFn: () => adminService.fetchTodayDriverAttendance(),
+    refetchInterval: 60000, // Refetch every minute
   });
 
   // Filter drivers by search query and filters
@@ -90,6 +113,43 @@ export const Drivers: React.FC = () => {
   const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
     return status === 'ACTIVE' ? 'default' : 'secondary';
   };
+
+  const getAttendanceStatusBadge = (status: DriverAttendanceStatus) => {
+    switch (status) {
+      case 'PRESENT':
+        return (
+          <Badge variant="default" className="bg-green-500">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Present
+          </Badge>
+        );
+      case 'ABSENT':
+        return (
+          <Badge variant="destructive">
+            <XCircle className="mr-1 h-3 w-3" />
+            Absent
+          </Badge>
+        );
+      case 'ON_LEAVE':
+        return (
+          <Badge variant="secondary">
+            <AlertCircle className="mr-1 h-3 w-3" />
+            On Leave
+          </Badge>
+        );
+    }
+  };
+
+  // Calculate attendance stats
+  const attendanceStats = React.useMemo(() => {
+    if (!todayAttendance) return { present: 0, absent: 0, onLeave: 0 };
+    
+    return {
+      present: todayAttendance.filter(a => a.status === 'PRESENT').length,
+      absent: todayAttendance.filter(a => a.status === 'ABSENT').length,
+      onLeave: todayAttendance.filter(a => a.status === 'ON_LEAVE').length,
+    };
+  }, [todayAttendance]);
 
   return (
     <AnimatedPage>
@@ -187,6 +247,139 @@ export const Drivers: React.FC = () => {
             </Card>
           </motion.div>
         </div>
+
+        {/* Today's Attendance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Today's Attendance - {format(new Date(), 'MMMM dd, yyyy')}
+            </CardTitle>
+            <CardDescription>
+              Driver attendance status for today (ERP Integration)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingAttendance ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : !todayAttendance || todayAttendance.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  No attendance records for today.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Attendance Summary */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 border rounded-lg bg-green-50 dark:bg-green-950/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <p className="text-sm font-medium text-muted-foreground">Present</p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">{attendanceStats.present}</p>
+                  </div>
+                  <div className="p-3 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <p className="text-sm font-medium text-muted-foreground">Absent</p>
+                    </div>
+                    <p className="text-2xl font-bold text-red-600">{attendanceStats.absent}</p>
+                  </div>
+                  <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-950/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle className="h-4 w-4 text-gray-600" />
+                      <p className="text-sm font-medium text-muted-foreground">On Leave</p>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-600">{attendanceStats.onLeave}</p>
+                  </div>
+                </div>
+
+                {/* Attendance Table */}
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[180px]">Driver</TableHead>
+                        <TableHead className="min-w-[120px]">Status</TableHead>
+                        <TableHead className="min-w-[120px]">Check-in Time</TableHead>
+                        <TableHead className="min-w-[120px]">Check-out Time</TableHead>
+                        <TableHead className="min-w-[200px]">Remarks</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {todayAttendance.map((attendance) => (
+                        <TableRow 
+                          key={attendance.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            const driver = drivers?.find(d => d.id === attendance.driverId);
+                            if (driver) navigate(`/admin/drivers/${driver.id}`);
+                          }}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              <span className="font-medium">{attendance.driverName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getAttendanceStatusBadge(attendance.status)}</TableCell>
+                          <TableCell>
+                            {attendance.checkInTime ? (
+                              <span className="text-sm">
+                                {format(new Date(attendance.checkInTime), 'hh:mm a')}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground italic">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {attendance.checkOutTime ? (
+                              <span className="text-sm">
+                                {format(new Date(attendance.checkOutTime), 'hh:mm a')}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground italic">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {attendance.remarks ? (
+                              <span className="text-sm text-muted-foreground">{attendance.remarks}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground italic">-</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* ERP Integration Notice */}
+                <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        ERP Integration
+                      </p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Attendance data is currently using mock data. In production, this will be automatically synced with your school's ERP system for real-time attendance tracking and reporting.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Drivers List */}
         <Card>

@@ -1255,3 +1255,209 @@ export const getStudentFeesSummary = (studentId: string): import('@/types').Stud
     fees: sortedFees,
   };
 };
+
+// Mock Driver Attendance Records
+export const mockDriverAttendance: import('@/types').DriverAttendanceRecord[] = [
+  // John Anderson (driver-1) - Consistent attendance
+  {
+    id: 'datt-001',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    date: new Date().toISOString().split('T')[0], // Today
+    status: 'PRESENT',
+    checkInTime: new Date(new Date().setHours(6, 45, 0, 0)).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+    markedAt: new Date(new Date().setHours(6, 45, 0, 0)).toISOString(),
+  },
+  {
+    id: 'datt-002',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 86400000 + 6.75 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 86400000 + 16 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  {
+    id: 'datt-003',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 2 * 86400000 + 6.8 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 2 * 86400000 + 16.5 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  {
+    id: 'datt-004',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 3 * 86400000 + 6.7 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 3 * 86400000 + 16.2 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  {
+    id: 'datt-005',
+    driverId: 'driver-1',
+    driverName: 'John Anderson',
+    date: new Date(Date.now() - 4 * 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 4 * 86400000 + 6.9 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 4 * 86400000 + 16.3 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  
+  // Sarah Thompson (driver-2) - Present today
+  {
+    id: 'datt-006',
+    driverId: 'driver-2',
+    driverName: 'Sarah Thompson',
+    date: new Date().toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(new Date().setHours(6, 50, 0, 0)).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+    markedAt: new Date(new Date().setHours(6, 50, 0, 0)).toISOString(),
+  },
+  {
+    id: 'datt-007',
+    driverId: 'driver-2',
+    driverName: 'Sarah Thompson',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 86400000 + 6.85 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 86400000 + 16.1 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  {
+    id: 'datt-008',
+    driverId: 'driver-2',
+    driverName: 'Sarah Thompson',
+    date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 2 * 86400000 + 7.3 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 2 * 86400000 + 16.5 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  
+  // Michael Chen (driver-3) - Present today
+  {
+    id: 'datt-009',
+    driverId: 'driver-3',
+    driverName: 'Michael Chen',
+    date: new Date().toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(new Date().setHours(6, 40, 0, 0)).toISOString(),
+    remarks: 'Early arrival',
+    markedBy: 'admin-1',
+    markedAt: new Date(new Date().setHours(6, 40, 0, 0)).toISOString(),
+  },
+  {
+    id: 'datt-010',
+    driverId: 'driver-3',
+    driverName: 'Michael Chen',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 86400000 + 6.7 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 86400000 + 16 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  
+  // Emily Rodriguez (driver-4) - Absent today
+  {
+    id: 'datt-011',
+    driverId: 'driver-4',
+    driverName: 'Emily Rodriguez',
+    date: new Date().toISOString().split('T')[0],
+    status: 'ABSENT',
+    remarks: 'Called in sick',
+    markedBy: 'admin-1',
+    markedAt: new Date(new Date().setHours(6, 30, 0, 0)).toISOString(),
+  },
+  {
+    id: 'datt-012',
+    driverId: 'driver-4',
+    driverName: 'Emily Rodriguez',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 86400000 + 6.8 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 86400000 + 16.2 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  {
+    id: 'datt-013',
+    driverId: 'driver-4',
+    driverName: 'Emily Rodriguez',
+    date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 2 * 86400000 + 6.75 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 2 * 86400000 + 16.1 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+  
+  // David Kim (driver-5) - On leave today
+  {
+    id: 'datt-014',
+    driverId: 'driver-5',
+    driverName: 'David Kim',
+    date: new Date().toISOString().split('T')[0],
+    status: 'ON_LEAVE',
+    remarks: 'Approved leave - family emergency',
+    markedBy: 'admin-1',
+    markedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'datt-015',
+    driverId: 'driver-5',
+    driverName: 'David Kim',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    status: 'PRESENT',
+    checkInTime: new Date(Date.now() - 86400000 + 6.9 * 3600000).toISOString(),
+    checkOutTime: new Date(Date.now() - 86400000 + 16.4 * 3600000).toISOString(),
+    remarks: 'On time',
+    markedBy: 'admin-1',
+  },
+];
+
+// Helper function to get driver attendance summary
+export const getDriverAttendanceSummary = (driverId: string): import('@/types').DriverAttendanceSummary => {
+  const records = mockDriverAttendance.filter(att => att.driverId === driverId);
+  
+  const totalDays = records.length;
+  const presentCount = records.filter(r => r.status === 'PRESENT').length;
+  const absentCount = records.filter(r => r.status === 'ABSENT').length;
+  const leaveCount = records.filter(r => r.status === 'ON_LEAVE').length;
+  const attendancePercentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
+  
+  // Sort by date descending (most recent first)
+  const recentRecords = [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+  
+  return {
+    driverId,
+    totalDays,
+    presentCount,
+    absentCount,
+    leaveCount,
+    attendancePercentage,
+    recentRecords,
+  };
+};
+
+// Helper function to get today's driver attendance
+export const getTodayDriverAttendance = (): import('@/types').DriverAttendanceRecord[] => {
+  const today = new Date().toISOString().split('T')[0];
+  return mockDriverAttendance.filter(att => att.date === today);
+};

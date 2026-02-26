@@ -276,6 +276,49 @@ class AdminService {
   }
 
   /**
+   * Fetch driver attendance summary
+   * @param driverId - The driver ID
+   * @returns Promise with attendance summary
+   */
+  async fetchDriverAttendance(driverId: string): Promise<import('@/types').DriverAttendanceSummary> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getDriverAttendanceSummary } = await import('@/lib/mockData');
+      return getDriverAttendanceSummary(driverId);
+    }
+
+    try {
+      const response = await api.get<import('@/types').DriverAttendanceSummary>(`/admin/drivers/${driverId}/attendance`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch driver attendance:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch today's driver attendance for all drivers
+   * @returns Promise with array of today's attendance records
+   */
+  async fetchTodayDriverAttendance(): Promise<import('@/types').DriverAttendanceRecord[]> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getTodayDriverAttendance } = await import('@/lib/mockData');
+      return getTodayDriverAttendance();
+    }
+
+    try {
+      const response = await api.get<import('@/types').DriverAttendanceRecord[]>('/admin/drivers/attendance/today');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch today driver attendance:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch trip details by trip ID
    * @param tripId - The trip ID
    * @returns Promise with trip details
