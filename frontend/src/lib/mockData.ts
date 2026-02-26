@@ -984,3 +984,274 @@ export const getStudentAttendanceSummary = (studentId: string): import('@/types'
     recentRecords,
   };
 };
+
+// Mock Transport Fees
+export const mockTransportFees: import('@/types').TransportFee[] = [
+  // Emma Johnson (student-1) - Monthly fees
+  {
+    id: 'fee-001',
+    studentId: 'student-1',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-01-28',
+    paidAmount: 150,
+    status: 'PAID',
+    remarks: 'Paid via online banking',
+  },
+  {
+    id: 'fee-002',
+    studentId: 'student-1',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+    remarks: 'Payment due soon',
+  },
+  {
+    id: 'fee-003',
+    studentId: 'student-1',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-01-01',
+    paidDate: '2026-01-05',
+    paidAmount: 150,
+    status: 'PAID',
+    remarks: 'Paid via cash',
+  },
+  
+  // Liam Smith (student-2) - Monthly fees
+  {
+    id: 'fee-004',
+    studentId: 'student-2',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-02-01',
+    paidAmount: 150,
+    status: 'PAID',
+    remarks: 'Paid on time',
+  },
+  {
+    id: 'fee-005',
+    studentId: 'student-2',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+  },
+  
+  // Olivia Brown (student-3) - Quarterly fees
+  {
+    id: 'fee-006',
+    studentId: 'student-3',
+    academicYear: '2025-2026',
+    frequency: 'QUARTERLY',
+    amount: 400,
+    currency: 'USD',
+    dueDate: '2026-01-15',
+    paidDate: '2026-01-10',
+    paidAmount: 400,
+    status: 'PAID',
+    remarks: 'Q1 payment - Paid early',
+  },
+  {
+    id: 'fee-007',
+    studentId: 'student-3',
+    academicYear: '2025-2026',
+    frequency: 'QUARTERLY',
+    amount: 400,
+    currency: 'USD',
+    dueDate: '2026-04-15',
+    status: 'PENDING',
+    remarks: 'Q2 payment',
+  },
+  
+  // Noah Davis (student-4) - Monthly with overdue
+  {
+    id: 'fee-008',
+    studentId: 'student-4',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-01-01',
+    status: 'OVERDUE',
+    remarks: 'Payment overdue - please contact admin',
+  },
+  {
+    id: 'fee-009',
+    studentId: 'student-4',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-02-05',
+    paidAmount: 100,
+    status: 'PARTIAL',
+    remarks: 'Partial payment received - $50 pending',
+  },
+  {
+    id: 'fee-010',
+    studentId: 'student-4',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+  },
+  
+  // Ava Wilson (student-5) - Annual fee
+  {
+    id: 'fee-011',
+    studentId: 'student-5',
+    academicYear: '2025-2026',
+    frequency: 'ANNUALLY',
+    amount: 1500,
+    currency: 'USD',
+    dueDate: '2025-09-01',
+    paidDate: '2025-08-25',
+    paidAmount: 1500,
+    status: 'PAID',
+    remarks: 'Annual fee paid in full',
+  },
+  
+  // Ethan Martinez (student-6) - Monthly fees
+  {
+    id: 'fee-012',
+    studentId: 'student-6',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-01-30',
+    paidAmount: 150,
+    status: 'PAID',
+  },
+  {
+    id: 'fee-013',
+    studentId: 'student-6',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+  },
+  
+  // James Johnson (student-7) - Monthly fees
+  {
+    id: 'fee-014',
+    studentId: 'student-7',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-02-02',
+    paidAmount: 150,
+    status: 'PAID',
+  },
+  {
+    id: 'fee-015',
+    studentId: 'student-7',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+  },
+  
+  // Sophia Garcia (student-8) - No route assigned, no fees
+  
+  // Mason Lee (student-9) - Monthly fees
+  {
+    id: 'fee-016',
+    studentId: 'student-9',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-02-01',
+    paidDate: '2026-02-01',
+    paidAmount: 150,
+    status: 'PAID',
+  },
+  {
+    id: 'fee-017',
+    studentId: 'student-9',
+    academicYear: '2025-2026',
+    frequency: 'MONTHLY',
+    amount: 150,
+    currency: 'USD',
+    dueDate: '2026-03-01',
+    status: 'PENDING',
+  },
+  
+  // Isabella Taylor (student-10) - Quarterly fees
+  {
+    id: 'fee-018',
+    studentId: 'student-10',
+    academicYear: '2025-2026',
+    frequency: 'QUARTERLY',
+    amount: 400,
+    currency: 'USD',
+    dueDate: '2026-01-15',
+    paidDate: '2026-01-20',
+    paidAmount: 400,
+    status: 'PAID',
+    remarks: 'Q1 payment',
+  },
+  {
+    id: 'fee-019',
+    studentId: 'student-10',
+    academicYear: '2025-2026',
+    frequency: 'QUARTERLY',
+    amount: 400,
+    currency: 'USD',
+    dueDate: '2026-04-15',
+    status: 'PENDING',
+    remarks: 'Q2 payment',
+  },
+];
+
+// Helper function to get student fees summary
+export const getStudentFeesSummary = (studentId: string): import('@/types').StudentFeesSummary => {
+  const fees = mockTransportFees.filter(fee => fee.studentId === studentId);
+  
+  const totalFees = fees.reduce((sum, fee) => sum + fee.amount, 0);
+  const paidAmount = fees.reduce((sum, fee) => sum + (fee.paidAmount || 0), 0);
+  const pendingAmount = fees
+    .filter(f => f.status === 'PENDING' || f.status === 'PARTIAL')
+    .reduce((sum, fee) => sum + (fee.amount - (fee.paidAmount || 0)), 0);
+  const overdueAmount = fees
+    .filter(f => f.status === 'OVERDUE')
+    .reduce((sum, fee) => sum + fee.amount, 0);
+  
+  // Sort fees by due date descending (most recent first)
+  const sortedFees = [...fees].sort((a, b) => b.dueDate.localeCompare(a.dueDate));
+  
+  return {
+    studentId,
+    totalFees,
+    paidAmount,
+    pendingAmount,
+    overdueAmount,
+    currency: fees[0]?.currency || 'USD',
+    fees: sortedFees,
+  };
+};

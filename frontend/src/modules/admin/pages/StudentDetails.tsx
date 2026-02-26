@@ -14,6 +14,9 @@ import {
   XCircle,
   Clock,
   TrendingUp,
+  DollarSign,
+  AlertCircle,
+  CreditCard,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +32,7 @@ import {
 } from '@/components/ui/table';
 import { AnimatedPage } from '@/components/AnimatedPage';
 import { adminService } from '@/services/admin.service';
-import { Student, StudentAttendanceSummary, AttendanceStatus } from '@/types';
+import { Student, StudentAttendanceSummary, AttendanceStatus, FeePaymentStatus } from '@/types';
 import { format } from 'date-fns';
 
 export const StudentDetails: React.FC = () => {
@@ -59,6 +62,16 @@ export const StudentDetails: React.FC = () => {
     enabled: !!studentId && !!student?.routeId,
   });
 
+  // Fetch student fees
+  const {
+    data: fees,
+    isLoading: isLoadingFees,
+  } = useQuery({
+    queryKey: ['studentFees', studentId],
+    queryFn: () => adminService.fetchStudentFees(studentId!),
+    enabled: !!studentId && !!student?.routeId,
+  });
+
   const getStatusBadgeVariant = (status: string): "default" | "secondary" => {
     return status === 'ACTIVE' ? 'default' : 'secondary';
   };
@@ -84,6 +97,39 @@ export const StudentDetails: React.FC = () => {
           <Badge variant="secondary">
             <Clock className="mr-1 h-3 w-3" />
             Pending
+          </Badge>
+        );
+    }
+  };
+
+  const getFeeStatusBadge = (status: FeePaymentStatus) => {
+    switch (status) {
+      case 'PAID':
+        return (
+          <Badge variant="default" className="bg-green-500">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Paid
+          </Badge>
+        );
+      case 'PENDING':
+        return (
+          <Badge variant="secondary">
+            <Clock className="mr-1 h-3 w-3" />
+            Pending
+          </Badge>
+        );
+      case 'OVERDUE':
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="mr-1 h-3 w-3" />
+            Overdue
+          </Badge>
+        );
+      case 'PARTIAL':
+        return (
+          <Badge variant="default" className="bg-yellow-500">
+            <DollarSign className="mr-1 h-3 w-3" />
+            Partial
           </Badge>
         );
     }
@@ -272,6 +318,175 @@ export const StudentDetails: React.FC = () => {
                   <RouteIcon className="mr-2 h-4 w-4" />
                   View All Routes
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Transport Fees Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Transport Fees
+            </CardTitle>
+            <CardDescription>
+              Fee payment status and history (ERP Integration)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!student?.routeId ? (
+              <div className="text-center py-8">
+                <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Student must be assigned to a route to view transport fees.
+                </p>
+              </div>
+            ) : isLoadingFees ? (
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-40 w-full" />
+              </div>
+            ) : fees ? (
+              <div className="space-y-6">
+                {/* Fee Summary Statistics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm font-medium text-muted-foreground">Total Fees</p>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {fees.currency} {fees.totalFees.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <p className="text-sm font-medium text-muted-foreground">Paid</p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">
+                      {fees.currency} {fees.paidAmount.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-yellow-600" />
+                      <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                    </div>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      {fees.currency} {fees.pendingAmount.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <p className="text-sm font-medium text-muted-foreground">Overdue</p>
+                    </div>
+                    <p className="text-2xl font-bold text-red-600">
+                      {fees.currency} {fees.overdueAmount.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Fee Payment History */}
+                {fees.fees.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-3">Payment History</h3>
+                    <div className="rounded-md border overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[120px]">Due Date</TableHead>
+                            <TableHead className="min-w-[100px]">Frequency</TableHead>
+                            <TableHead className="min-w-[100px]">Amount</TableHead>
+                            <TableHead className="min-w-[100px]">Paid</TableHead>
+                            <TableHead className="min-w-[120px]">Status</TableHead>
+                            <TableHead className="min-w-[140px]">Paid Date</TableHead>
+                            <TableHead className="min-w-[200px]">Remarks</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {fees.fees.map((fee) => (
+                            <TableRow key={fee.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">
+                                    {format(new Date(fee.dueDate), 'MMM dd, yyyy')}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {fee.frequency}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {fee.currency} {fee.amount.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {fee.paidAmount ? (
+                                  <span className="text-green-600">
+                                    {fee.currency} {fee.paidAmount.toFixed(2)}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{getFeeStatusBadge(fee.status)}</TableCell>
+                              <TableCell>
+                                {fee.paidDate ? (
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(new Date(fee.paidDate), 'MMM dd, yyyy')}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground italic">Not paid</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {fee.remarks ? (
+                                  <span className="text-sm text-muted-foreground">{fee.remarks}</span>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground italic">-</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      No fee records found for this student.
+                    </p>
+                  </div>
+                )}
+
+                {/* ERP Integration Notice */}
+                <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        ERP Integration
+                      </p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Fee information is currently using mock data. In production, this will be automatically synced with your school's ERP system for real-time payment tracking and updates.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  No fee data available.
+                </p>
               </div>
             )}
           </CardContent>

@@ -270,3 +270,31 @@ export interface StudentAttendanceSummary {
   attendancePercentage: number;
   recentRecords: StudentAttendanceRecord[];
 }
+
+// Transport Fee Types
+export type FeePaymentStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'PARTIAL';
+export type FeeFrequency = 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY';
+
+export interface TransportFee {
+  id: string;
+  studentId: string;
+  academicYear: string;
+  frequency: FeeFrequency;
+  amount: number;
+  currency: string;
+  dueDate: string;
+  paidDate?: string;
+  paidAmount?: number;
+  status: FeePaymentStatus;
+  remarks?: string;
+}
+
+export interface StudentFeesSummary {
+  studentId: string;
+  totalFees: number;
+  paidAmount: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  currency: string;
+  fees: TransportFee[];
+}

@@ -254,6 +254,28 @@ class AdminService {
   }
 
   /**
+   * Fetch transport fees summary for a specific student
+   * @param studentId - The student ID
+   * @returns Promise with fees summary
+   */
+  async fetchStudentFees(studentId: string): Promise<import('@/types').StudentFeesSummary> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getStudentFeesSummary } = await import('@/lib/mockData');
+      return getStudentFeesSummary(studentId);
+    }
+
+    try {
+      const response = await api.get<import('@/types').StudentFeesSummary>(`/admin/students/${studentId}/fees`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch student fees:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch trip details by trip ID
    * @param tripId - The trip ID
    * @returns Promise with trip details
