@@ -1,0 +1,29 @@
+package com.school.transport.module.tracking.dto;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class LocationUpdateRequest {
+    
+    @NotNull(message = "Latitude is required")
+    private BigDecimal latitude;
+    
+    @NotNull(message = "Longitude is required")
+    private BigDecimal longitude;
+    
+    private BigDecimal speed;
+    
+    private BigDecimal heading;
+    
+    private LocalDateTime timestamp;
+}

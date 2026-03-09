@@ -7,8 +7,8 @@ spring:
   
   datasource:
     url: jdbc:postgresql://localhost:5432/transport_ops_dev
-    username: dev_user
-    password: dev_password
+    username: jyesht
+    password: ""
 
 logging:
   level:
