@@ -25,6 +25,9 @@ public class Trip {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private UUID tenantId;
+
     @Column(name = "route_id", nullable = false)
     private UUID routeId;
 

@@ -22,6 +22,12 @@ public class LatestBusLocation {
     @Column(name = "trip_id", nullable = false)
     private UUID tripId;
 
+    @Column(name = "route_id", nullable = false)
+    private UUID routeId;
+
+    @Column(name = "driver_id", nullable = false)
+    private UUID driverId;
+
     @Column(name = "latitude", nullable = false, precision = 10, scale = 8)
     private BigDecimal latitude;
 
@@ -33,6 +39,9 @@ public class LatestBusLocation {
 
     @Column(name = "heading", precision = 5, scale = 2)
     private BigDecimal heading;
+
+    @Column(name = "accuracy_m", precision = 5, scale = 2)
+    private BigDecimal accuracyM;
 
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;

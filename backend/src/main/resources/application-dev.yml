@@ -6,9 +6,9 @@ spring:
         format_sql: true
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/transport_ops_dev
-    username: jyesht
-    password: ""
+    url: jdbc:postgresql://localhost:5432/tos_db
+    username: postgres
+    password: "123456"
 
 logging:
   level:

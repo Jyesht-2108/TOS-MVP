@@ -40,14 +40,19 @@ public class GpsLog {
     @Column(name = "heading", precision = 5, scale = 2)
     private BigDecimal heading;
 
+    @Column(name = "accuracy_m", precision = 5, scale = 2)
+    private BigDecimal accuracyM;
+
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "received_at", nullable = false)
+    private LocalDateTime receivedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (receivedAt == null) {
+            receivedAt = LocalDateTime.now();
+        }
     }
 }

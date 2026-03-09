@@ -34,6 +34,10 @@ public class Attendance {
     @Column(name = "status", nullable = false)
     private AttendanceStatus status;
 
+    @Column(name = "locked", nullable = false)
+    @Builder.Default
+    private Boolean locked = false;
+
     @Column(name = "marked_at")
     private LocalDateTime markedAt;
 

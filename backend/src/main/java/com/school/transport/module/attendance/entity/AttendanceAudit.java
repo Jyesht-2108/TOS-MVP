@@ -24,6 +24,9 @@ public class AttendanceAudit {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @Column(name = "attendance_id", nullable = false)
+    private UUID attendanceId;
+
     @Column(name = "trip_id", nullable = false)
     private UUID tripId;
 
