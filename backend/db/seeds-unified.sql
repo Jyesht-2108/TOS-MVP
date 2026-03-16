@@ -20,7 +20,8 @@ INSERT INTO users (id, tenant_id, email, password_hash, name, phone, role, statu
 -- Driver Users
 INSERT INTO users (id, tenant_id, email, password_hash, name, phone, role, status, created_at, updated_at) VALUES
 ('20000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'driver1@springfield-school.edu', '$2a$10$dummyhash', 'John Anderson', '+1234567891', 'DRIVER', 'ACTIVE', NOW(), NOW()),
-('20000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'driver2@springfield-school.edu', '$2a$10$dummyhash', 'Sarah Thompson', '+1234567892', 'DRIVER', 'ACTIVE', NOW(), NOW());
+('20000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'driver2@springfield-school.edu', '$2a$10$dummyhash', 'Sarah Thompson', '+1234567892', 'DRIVER', 'ACTIVE', NOW(), NOW()),
+('20000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 'driver3@springfield-school.edu', '$2a$10$dummyhash', 'Michael Kumar', '9876543210', 'DRIVER', 'ACTIVE', NOW(), NOW());
 
 -- Parent Users
 INSERT INTO users (id, tenant_id, email, password_hash, name, phone, role, status, created_at, updated_at) VALUES
@@ -33,7 +34,8 @@ INSERT INTO users (id, tenant_id, email, password_hash, name, phone, role, statu
 
 INSERT INTO drivers (id, user_id, tenant_id, license_number, license_expiry, vehicle_number, vehicle_type, status, created_at, updated_at) VALUES
 ('d0000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'DL123456789', '2027-12-31', 'BUS-001', 'School Bus', 'ACTIVE', NOW(), NOW()),
-('d0000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'DL987654321', '2028-06-30', 'BUS-002', 'School Bus', 'ACTIVE', NOW(), NOW());
+('d0000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'DL987654321', '2028-06-30', 'BUS-002', 'School Bus', 'ACTIVE', NOW(), NOW()),
+('d0000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 'DL555666777', '2029-03-15', 'BUS-003', 'School Bus', 'ACTIVE', NOW(), NOW());
 
 -- ============================================================================
 -- PART 4: STUDENTS
@@ -65,7 +67,8 @@ INSERT INTO student_parents (student_id, parent_user_id, relationship, is_primar
 
 INSERT INTO routes (id, tenant_id, name, status, created_at, updated_at) VALUES
 ('50000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'Route A - Morning', 'ACTIVE', NOW(), NOW()),
-('50000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'Route B - Evening', 'ACTIVE', NOW(), NOW());
+('50000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'Route B - Evening', 'ACTIVE', NOW(), NOW()),
+('50000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 'Route C - Afternoon', 'ACTIVE', NOW(), NOW());
 
 -- ============================================================================
 -- PART 7: ROUTE STUDENTS
@@ -93,16 +96,23 @@ INSERT INTO route_driver_assignment (id, route_id, driver_id, active_from, activ
 INSERT INTO route_driver_assignment (id, route_id, driver_id, active_from, active_to, created_at) VALUES
 ('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', CURRENT_DATE, NULL, NOW());
 
+-- Driver 3 (Michael Kumar - 9876543210) assigned to Route C
+INSERT INTO route_driver_assignment (id, route_id, driver_id, active_from, active_to, created_at) VALUES
+('60000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', CURRENT_DATE, NULL, NOW());
+
 -- ============================================================================
 -- SEED DATA SUMMARY
 -- ============================================================================
 -- Tenant: Springfield Elementary School
--- Users: 1 Admin, 2 Drivers, 2 Parents (5 total)
--- Drivers: 2 (with extended info)
+-- Users: 1 Admin, 3 Drivers, 2 Parents (6 total)
+-- Drivers: 3 (with extended info)
+--   - John Anderson (+1234567891) - Route A
+--   - Sarah Thompson (+1234567892) - Route B
+--   - Michael Kumar (9876543210) - Route C
 -- Students: 4 (2 per parent, 2 per route)
--- Routes: 2 (Route A - Morning, Route B - Evening)
--- Route Students: 4 assignments (2 per route)
--- Driver Assignments: 2 (1 driver per route)
+-- Routes: 3 (Route A - Morning, Route B - Evening, Route C - Afternoon)
+-- Route Students: 4 assignments (2 per route A & B)
+-- Driver Assignments: 3 (1 driver per route)
 -- ============================================================================
 
 -- Verification Queries (Optional - uncomment to run)

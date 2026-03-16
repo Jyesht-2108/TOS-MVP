@@ -15,6 +15,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class StartTripRequest {
     
+    @NotNull(message = "Driver ID is required")
+    private UUID driverId;
+    
     @NotNull(message = "Route ID is required")
     private UUID routeId;
     

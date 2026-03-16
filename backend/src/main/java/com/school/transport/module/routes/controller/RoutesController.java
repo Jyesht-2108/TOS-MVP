@@ -20,7 +20,8 @@ public class RoutesController {
     private final RouteService routeService;
     
     // TODO: Get tenantId from authenticated user context
-    private static final UUID MOCK_TENANT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+    // Using the actual tenant ID from seed data
+    private static final UUID MOCK_TENANT_ID = UUID.fromString("a0000000-0000-0000-0000-000000000001");
 
     /**
      * Get all routes
@@ -103,5 +104,16 @@ public class RoutesController {
             @PathVariable UUID studentId) {
         routeService.removeStudent(routeId, studentId, MOCK_TENANT_ID);
         return ResponseEntity.ok(ApiResponse.success("Student removed successfully", null));
+    }
+
+    /**
+     * Get routes assigned to a specific driver
+     * Used by driver mobile app to fetch their assigned routes
+     */
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<ApiResponse<List<RouteResponse>>> getRoutesByDriver(
+            @PathVariable UUID driverId) {
+        List<RouteResponse> routes = routeService.getRoutesByDriver(driverId, MOCK_TENANT_ID);
+        return ResponseEntity.ok(ApiResponse.success(routes));
     }
 }

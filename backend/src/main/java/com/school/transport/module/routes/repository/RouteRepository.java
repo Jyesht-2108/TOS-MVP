@@ -20,4 +20,6 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     long countByTenantId(UUID tenantId);
     
     long countByTenantIdAndStatus(UUID tenantId, String status);
+    
+    long countByStatus(String status);
 }

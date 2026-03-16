@@ -11,7 +11,7 @@ import { ParentLayout } from '@/layouts/ParentLayout';
 import { Login } from '@/pages/Login';
 import { NotFound } from '@/pages/NotFound';
 import { AdminDashboard } from '@/modules/admin/pages/Dashboard';
-import { Routes as AdminRoutes } from '@/modules/admin/pages/Routes';
+import { Routes as RoutesPage } from '@/modules/admin/pages/Routes';
 import { RouteDetails } from '@/modules/admin/pages/RouteDetails';
 import { Drivers } from '@/modules/admin/pages/Drivers';
 import { DriverDetails } from '@/modules/admin/pages/DriverDetails';
@@ -72,7 +72,7 @@ function AnimatedRoutes() {
           }
         >
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/routes" element={<AdminRoutes />} />
+          <Route path="/admin/routes" element={<RoutesPage />} />
           <Route path="/admin/routes/:routeId" element={<RouteDetails />} />
           <Route path="/admin/drivers" element={<Drivers />} />
           <Route path="/admin/drivers/:driverId" element={<DriverDetails />} />

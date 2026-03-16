@@ -30,7 +30,7 @@ const MOCK_USERS = {
 };
 
 // Check if we should use mock data (when backend is not available)
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 class AuthService {
   /**

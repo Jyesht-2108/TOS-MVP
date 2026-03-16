@@ -59,6 +59,12 @@ api.interceptors.request.use(
 // Response interceptor for error handling and automatic logout on 401
 api.interceptors.response.use(
   (response) => {
+    // Unwrap ApiResponse format from backend
+    // Backend returns: {success: true, data: [...]}
+    // Frontend expects: [...]
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      response.data = response.data.data;
+    }
     return response;
   },
   (error: any) => {

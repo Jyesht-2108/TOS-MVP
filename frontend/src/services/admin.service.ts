@@ -3,7 +3,7 @@ import { DashboardStats, RecentActivity, RouteResponse, Driver, Student } from '
 import { getRecentActivities, initializeActivities } from '@/lib/activityTracker';
 
 // Check if we should use mock data
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Initialize activities on first load
 if (USE_MOCK) {

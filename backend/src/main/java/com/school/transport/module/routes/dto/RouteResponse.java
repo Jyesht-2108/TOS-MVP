@@ -19,7 +19,7 @@ public class RouteResponse {
     private String status;
     private UUID driverId;
     private String driverName;
-    private Integer studentCount;
+    private int studentCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

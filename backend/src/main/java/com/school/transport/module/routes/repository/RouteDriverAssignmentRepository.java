@@ -22,6 +22,8 @@ public interface RouteDriverAssignmentRepository extends JpaRepository<RouteDriv
     @Query("SELECT rda FROM RouteDriverAssignment rda WHERE rda.driverId = :driverId AND rda.activeTo IS NULL")
     List<RouteDriverAssignment> findActiveAssignmentsByDriverId(UUID driverId);
     
+    List<RouteDriverAssignment> findByDriverIdAndActiveTo(UUID driverId, java.time.LocalDateTime activeTo);
+    
     @Query("SELECT COUNT(rda) FROM RouteDriverAssignment rda WHERE rda.routeId = :routeId AND rda.activeTo IS NULL")
     long countActiveAssignmentsByRouteId(UUID routeId);
 }

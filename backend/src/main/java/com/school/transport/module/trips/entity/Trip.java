@@ -35,7 +35,7 @@ public class Trip {
     private UUID driverId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "trip_type", nullable = false)
+    @Column(name = "trip_type", nullable = false, columnDefinition = "trip_type_enum")
     private TripType tripType;
 
     @Column(name = "trip_date", nullable = false)
@@ -48,7 +48,7 @@ public class Trip {
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "trip_status_enum")
     private TripStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)

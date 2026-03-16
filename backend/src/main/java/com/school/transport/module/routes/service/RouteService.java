@@ -9,6 +9,7 @@ import com.school.transport.module.routes.entity.RouteStudent;
 import com.school.transport.module.routes.repository.RouteDriverAssignmentRepository;
 import com.school.transport.module.routes.repository.RouteRepository;
 import com.school.transport.module.routes.repository.RouteStudentRepository;
+import com.school.transport.module.notifications.service.DriverNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class RouteService {
     private final RouteRepository routeRepository;
     private final RouteStudentRepository routeStudentRepository;
     private final RouteDriverAssignmentRepository routeDriverAssignmentRepository;
+    private final DriverNotificationService driverNotificationService;
 
     /**
      * Fetch all routes for a tenant
@@ -168,6 +170,25 @@ public class RouteService {
         
         routeStudentRepository.saveAll(assignments);
         log.info("Assigned {} students to route: {}", assignments.size(), routeId);
+        
+        // Get the driver assigned to this route
+        RouteDriverAssignment activeDriver = routeDriverAssignmentRepository
+                .findActiveAssignmentByRouteId(routeId)
+                .orElse(null);
+        
+        // Send SSE notification to driver for each student assigned
+        if (activeDriver != null) {
+            for (UUID studentId : request.getStudentIds()) {
+                driverNotificationService.notifyDriver(
+                    activeDriver.getDriverId(), 
+                    "STUDENT_ASSIGNED", 
+                    java.util.Map.of(
+                        "studentId", studentId,
+                        "routeId", routeId
+                    )
+                );
+            }
+        }
     }
 
     /**
@@ -187,6 +208,52 @@ public class RouteService {
         
         routeStudentRepository.deleteByRouteIdAndStudentId(routeId, studentId);
         log.info("Student removed from route successfully");
+        
+        // Get the driver assigned to this route
+        RouteDriverAssignment activeDriver = routeDriverAssignmentRepository
+                .findActiveAssignmentByRouteId(routeId)
+                .orElse(null);
+        
+        // Send SSE notification to driver
+        if (activeDriver != null) {
+            driverNotificationService.notifyDriver(
+                activeDriver.getDriverId(),
+                "STUDENT_REMOVED", 
+                java.util.Map.of(
+                    "studentId", studentId,
+                    "routeId", routeId
+                )
+            );
+        }
+    }
+
+    /**
+     * Get routes assigned to a specific driver
+     */
+    public List<RouteResponse> getRoutesByDriver(UUID driverId, UUID tenantId) {
+        log.info("Fetching routes for driver: {} in tenant: {}", driverId, tenantId);
+        
+        // Get all active assignments for this driver
+        List<RouteDriverAssignment> assignments = routeDriverAssignmentRepository
+                .findByDriverIdAndActiveTo(driverId, null);
+        
+        // Get route IDs
+        List<UUID> routeIds = assignments.stream()
+                .map(RouteDriverAssignment::getRouteId)
+                .collect(Collectors.toList());
+        
+        if (routeIds.isEmpty()) {
+            log.info("No routes found for driver: {}", driverId);
+            return List.of();
+        }
+        
+        // Fetch routes
+        List<Route> routes = routeRepository.findAllById(routeIds);
+        
+        return routes.stream()
+                .filter(route -> route.getTenantId().equals(tenantId))
+                .map(this::mapToRouteResponse)
+                .collect(Collectors.toList());
     }
 
     /**

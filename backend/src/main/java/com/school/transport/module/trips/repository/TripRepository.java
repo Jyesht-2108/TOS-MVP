@@ -17,19 +17,26 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     
     List<Trip> findByDriverId(UUID driverId);
     
+    List<Trip> findByDriverIdAndTenantId(UUID driverId, UUID tenantId);
+    
     List<Trip> findByTripDate(LocalDate tripDate);
     
     List<Trip> findByStatus(Trip.TripStatus status);
     
+    @Query(value = "SELECT * FROM trips t WHERE t.tenant_id = :tenantId AND t.status = CAST(:status AS trip_status_enum)", nativeQuery = true)
+    List<Trip> findByTenantIdAndStatus(UUID tenantId, String status);
+    
     @Query("SELECT t FROM Trip t WHERE t.routeId = :routeId AND t.status = :status")
     List<Trip> findByRouteIdAndStatus(UUID routeId, Trip.TripStatus status);
     
-    @Query("SELECT t FROM Trip t WHERE t.routeId = :routeId AND t.tripType = :tripType AND t.status = 'ACTIVE'")
-    Optional<Trip> findActiveTrip(UUID routeId, Trip.TripType tripType);
+    @Query(value = "SELECT * FROM trips t WHERE t.route_id = :routeId AND t.trip_type::text = :tripType AND t.status = 'ACTIVE'", nativeQuery = true)
+    Optional<Trip> findActiveTripByRouteIdAndTripType(UUID routeId, String tripType);
     
-    @Query("SELECT t FROM Trip t WHERE t.status = 'ACTIVE'")
+    @Query(value = "SELECT * FROM trips t WHERE t.status = 'ACTIVE'", nativeQuery = true)
     List<Trip> findAllActiveTrips();
     
-    @Query("SELECT t FROM Trip t WHERE t.driverId = :driverId AND t.status = 'ACTIVE'")
-    List<Trip> findActiveTripsForDriver(UUID driverId);
+    @Query(value = "SELECT * FROM trips t WHERE t.driver_id = :driverId AND t.status = 'ACTIVE'", nativeQuery = true)
+    Optional<Trip> findActiveTripByDriverId(UUID driverId);
+    
+    long countByStartTimeBetween(java.time.LocalDateTime startOfDay, java.time.LocalDateTime endOfDay);
 }

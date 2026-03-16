@@ -2,7 +2,7 @@ import api from '@/lib/api';
 import { LiveRouteTracking, ChildTransportInfo } from '@/types';
 
 // Check if we should use mock data
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.DEV;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 class ParentService {
   /**
