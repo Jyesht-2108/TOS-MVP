@@ -91,20 +91,23 @@ public class AdminController {
     }
     
     @GetMapping("/routes")
-    public ResponseEntity<ApiResponse<List<Object>>> getRoutes() {
+    public ResponseEntity<ApiResponse<List<com.school.transport.module.routes.dto.RouteResponse>>> getRoutes() {
         log.info("Admin fetching routes");
-        return ResponseEntity.ok(ApiResponse.success("Routes retrieved", java.util.Collections.emptyList()));
+        List<com.school.transport.module.routes.dto.RouteResponse> routes = adminService.getRoutes();
+        return ResponseEntity.ok(ApiResponse.success("Routes retrieved", routes));
     }
     
     @GetMapping("/drivers")
-    public ResponseEntity<ApiResponse<List<Object>>> getDrivers() {
+    public ResponseEntity<ApiResponse<List<com.school.transport.module.drivers.dto.DriverResponse>>> getDrivers() {
         log.info("Admin fetching drivers");
-        return ResponseEntity.ok(ApiResponse.success("Drivers retrieved", java.util.Collections.emptyList()));
+        List<com.school.transport.module.drivers.dto.DriverResponse> drivers = adminService.getDrivers();
+        return ResponseEntity.ok(ApiResponse.success("Drivers retrieved", drivers));
     }
     
     @GetMapping("/students")
-    public ResponseEntity<ApiResponse<List<Object>>> getStudents() {
+    public ResponseEntity<ApiResponse<List<com.school.transport.module.students.dto.StudentResponse>>> getStudents() {
         log.info("Admin fetching students");
-        return ResponseEntity.ok(ApiResponse.success("Students retrieved", java.util.Collections.emptyList()));
+        List<com.school.transport.module.students.dto.StudentResponse> students = adminService.getStudents();
+        return ResponseEntity.ok(ApiResponse.success("Students retrieved", students));
     }
 }
