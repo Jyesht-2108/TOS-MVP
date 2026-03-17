@@ -86,7 +86,7 @@ public class AdminService {
                 .map(driver -> {
                     User user = userRepository.findById(driver.getUserId()).orElse(null);
                     return DriverResponse.builder()
-                            .id(driver.getId())
+                            .id(driver.getUserId())  // Use userId as the ID for driver assignment
                             .userId(driver.getUserId())
                             .name(user != null ? user.getName() : "Unknown")
                             .email(user != null ? user.getEmail() : "")

@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 @Service
@@ -127,14 +129,24 @@ public class RouteService {
         Route route = routeRepository.findByIdAndTenantId(routeId, tenantId)
                 .orElseThrow(() -> new NotFoundException("Route not found with id: " + routeId));
         
-        // Check if there's already an active assignment
-        routeDriverAssignmentRepository.findActiveAssignmentByRouteId(routeId)
-                .ifPresent(existingAssignment -> {
-                    // Deactivate existing assignment
-                    existingAssignment.setActiveTo(LocalDateTime.now());
-                    routeDriverAssignmentRepository.save(existingAssignment);
-                    log.info("Deactivated previous driver assignment for route: {}", routeId);
-                });
+        // Check if driver is already assigned to this route
+        Optional<RouteDriverAssignment> existingAssignment = 
+                routeDriverAssignmentRepository.findActiveAssignmentByRouteId(routeId);
+        
+        if (existingAssignment.isPresent()) {
+            RouteDriverAssignment existing = existingAssignment.get();
+            
+            // If same driver, no need to do anything
+            if (existing.getDriverId().equals(request.getDriverId())) {
+                log.info("Driver {} is already assigned to route {}", request.getDriverId(), routeId);
+                return;
+            }
+            
+            // Deactivate all existing assignments for this route using bulk update
+            int deactivated = routeDriverAssignmentRepository
+                    .deactivateActiveAssignmentsByRouteId(routeId, LocalDateTime.now());
+            log.info("Deactivated {} previous driver assignment(s) for route: {}", deactivated, routeId);
+        }
         
         // Create new assignment
         RouteDriverAssignment assignment = RouteDriverAssignment.builder()
@@ -144,7 +156,7 @@ public class RouteService {
                 .build();
         
         routeDriverAssignmentRepository.save(assignment);
-        log.info("Driver assigned successfully to route: {}", routeId);
+        log.info("Driver {} assigned successfully to route: {}", request.getDriverId(), routeId);
     }
 
     /**
