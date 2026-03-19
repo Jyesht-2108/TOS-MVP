@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
+import { MultiRouteLiveMap } from '../components/MultiRouteLiveMap';
 import { adminService } from '@/services/admin.service';
 import { ActiveTrip, DriverActivity } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -173,6 +174,29 @@ export const LiveMonitoring: React.FC = () => {
             </Button>
           </div>
         </motion.div>
+
+        {/* Live Map Overview */}
+        {activeTrips && activeTrips.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Map Overview</CardTitle>
+              <CardDescription>
+                Real-time location of all active buses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MultiRouteLiveMap
+                routes={activeTrips.map(trip => ({
+                  routeId: trip.routeId,
+                  routeName: trip.routeName,
+                  vehicleNumber: trip.vehicleNumber,
+                  driverName: trip.driverName,
+                }))}
+                height="500px"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Active Trips */}
         <Card>

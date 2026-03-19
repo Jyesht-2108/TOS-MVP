@@ -83,4 +83,31 @@ public class GpsTrackingService {
         return latestBusLocationRepository.findByTripId(tripId)
                 .orElseThrow(() -> new RuntimeException("No location data found for trip: " + tripId));
     }
+
+    /**
+     * Get live tracking data by route ID
+     * Used by admin dashboard and parent portal for live map
+     */
+    public com.school.transport.module.tracking.dto.LiveTrackingResponse getLiveTrackingByRoute(UUID routeId) {
+        log.debug("Fetching live tracking for route: {}", routeId);
+        
+        // Get latest location for this route
+        LatestBusLocation location = latestBusLocationRepository.findByRouteId(routeId)
+                .orElseThrow(() -> new RuntimeException("No active tracking data found for route: " + routeId));
+        
+        // Get trip details to determine trip type
+        var trip = tripRepository.findById(location.getTripId())
+                .orElseThrow(() -> new RuntimeException("Trip not found: " + location.getTripId()));
+        
+        // Build response - convert BigDecimal to Double
+        return com.school.transport.module.tracking.dto.LiveTrackingResponse.builder()
+                .lat(location.getLatitude() != null ? location.getLatitude().doubleValue() : null)
+                .lng(location.getLongitude() != null ? location.getLongitude().doubleValue() : null)
+                .updated_at(location.getTimestamp())
+                .trip_id(location.getTripId())
+                .trip_type(trip.getTripType().toString())
+                .speed(location.getSpeed() != null ? location.getSpeed().doubleValue() : null)
+                .heading(location.getHeading() != null ? location.getHeading().doubleValue() : null)
+                .build();
+    }
 }

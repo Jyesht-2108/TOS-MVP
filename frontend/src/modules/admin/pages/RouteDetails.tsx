@@ -101,7 +101,8 @@ export const RouteDetails: React.FC = () => {
       // Import adminService to fetch driver activity
       const { adminService } = await import('@/services/admin.service');
       const activities = await adminService.fetchDriverActivity();
-      return activities.find((activity: import('@/types').DriverActivity) => activity.driverId === activeDriver.driverId);
+      const activity = activities.find((activity: import('@/types').DriverActivity) => activity.driverId === activeDriver.driverId);
+      return activity || null; // Return null instead of undefined
     },
     enabled: !!activeDriver?.driverId,
     refetchInterval: 10000, // Refresh every 10 seconds
@@ -332,7 +333,6 @@ export const RouteDetails: React.FC = () => {
                   <p className="text-xs text-muted-foreground mt-1">
                     Status: <span className={`font-medium ${
                       driverActivity.status === 'ACTIVE' ? 'text-green-600' : 
-                      driverActivity.status === 'IDLE' ? 'text-yellow-600' : 
                       'text-gray-600'
                     }`}>
                       {driverActivity.status}

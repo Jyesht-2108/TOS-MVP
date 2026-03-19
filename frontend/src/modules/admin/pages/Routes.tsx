@@ -61,6 +61,7 @@ export const Routes: React.FC = () => {
       }
       return routesService.fetchRoutes(statusFilter);
     },
+    refetchInterval: 30000, // Refetch every 30 seconds to keep driver assignments fresh
   });
 
   // Delete route mutation

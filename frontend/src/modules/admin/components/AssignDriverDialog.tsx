@@ -84,6 +84,10 @@ export const AssignDriverDialog: React.FC<AssignDriverDialogProps> = ({
       queryClient.invalidateQueries({ queryKey: ['route', routeId] });
       queryClient.invalidateQueries({ queryKey: ['route-drivers', routeId] });
       queryClient.invalidateQueries({ queryKey: ['routes'] });
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+
+      // Force refetch
+      queryClient.refetchQueries({ queryKey: ['routes'] });
 
       // Show success toast
       const message = currentDriver

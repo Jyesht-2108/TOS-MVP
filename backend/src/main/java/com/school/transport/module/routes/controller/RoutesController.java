@@ -107,6 +107,24 @@ public class RoutesController {
     }
 
     /**
+     * Get students assigned to a route
+     */
+    @GetMapping("/{routeId}/students")
+    public ResponseEntity<ApiResponse<List<com.school.transport.module.routes.dto.RouteStudentResponse>>> getRouteStudents(@PathVariable UUID routeId) {
+        List<com.school.transport.module.routes.dto.RouteStudentResponse> students = routeService.getRouteStudents(routeId, MOCK_TENANT_ID);
+        return ResponseEntity.ok(ApiResponse.success(students));
+    }
+
+    /**
+     * Get driver assignments for a route
+     */
+    @GetMapping("/{routeId}/drivers")
+    public ResponseEntity<ApiResponse<List<com.school.transport.module.routes.dto.RouteDriverAssignmentResponse>>> getRouteDrivers(@PathVariable UUID routeId) {
+        List<com.school.transport.module.routes.dto.RouteDriverAssignmentResponse> drivers = routeService.getRouteDriverAssignments(routeId, MOCK_TENANT_ID);
+        return ResponseEntity.ok(ApiResponse.success(drivers));
+    }
+
+    /**
      * Get routes assigned to a specific driver
      * Used by driver mobile app to fetch their assigned routes
      */

@@ -31,6 +31,11 @@ public class RouteService {
     private final RouteStudentRepository routeStudentRepository;
     private final RouteDriverAssignmentRepository routeDriverAssignmentRepository;
     private final DriverNotificationService driverNotificationService;
+    
+    // Add repositories for fetching related data
+    private final com.school.transport.module.students.repository.StudentRepository studentRepository;
+    private final com.school.transport.module.auth.repository.UserRepository userRepository;
+    private final com.school.transport.module.drivers.repository.DriverRepository driverRepository;
 
     /**
      * Fetch all routes for a tenant
@@ -291,5 +296,96 @@ public class RouteService {
                 .createdAt(route.getCreatedAt())
                 .updatedAt(route.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Get students assigned to a route
+     */
+    public List<com.school.transport.module.routes.dto.RouteStudentResponse> getRouteStudents(UUID routeId, UUID tenantId) {
+        log.info("Fetching students for route: {}", routeId);
+        
+        // Verify route exists and belongs to tenant
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new NotFoundException("Route not found"));
+        
+        if (!route.getTenantId().equals(tenantId)) {
+            throw new ValidationException("Route does not belong to this tenant");
+        }
+        
+        // Get all students for this route
+        List<RouteStudent> routeStudents = routeStudentRepository.findByRouteId(routeId);
+        
+        // Map to DTOs with student details
+        return routeStudents.stream()
+                .map(rs -> {
+                    var student = studentRepository.findById(rs.getStudentId()).orElse(null);
+                    
+                    return com.school.transport.module.routes.dto.RouteStudentResponse.builder()
+                            .routeId(rs.getRouteId())
+                            .studentId(rs.getStudentId())
+                            .student(student != null ? 
+                                com.school.transport.module.routes.dto.RouteStudentResponse.StudentInfo.builder()
+                                    .id(student.getId())
+                                    .name(student.getName())
+                                    .grade(student.getGrade())
+                                    .section(student.getSection())
+                                    .status(student.getStatus())
+                                    .build()
+                                : null)
+                            .attendancePresent(0) // TODO: Calculate from attendance records
+                            .attendanceTotal(0)   // TODO: Calculate from attendance records
+                            .createdAt(rs.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get driver assignments for a route
+     */
+    public List<com.school.transport.module.routes.dto.RouteDriverAssignmentResponse> getRouteDriverAssignments(UUID routeId, UUID tenantId) {
+        log.info("Fetching driver assignments for route: {}", routeId);
+        
+        // Verify route exists and belongs to tenant
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new NotFoundException("Route not found"));
+        
+        if (!route.getTenantId().equals(tenantId)) {
+            throw new ValidationException("Route does not belong to this tenant");
+        }
+        
+        // Get all driver assignments for this route
+        List<RouteDriverAssignment> assignments = routeDriverAssignmentRepository.findByRouteId(routeId);
+        
+        // Map to DTOs with driver details
+        return assignments.stream()
+                .map(assignment -> {
+                    var user = userRepository.findById(assignment.getDriverId()).orElse(null);
+                    com.school.transport.module.drivers.entity.Driver driver = null;
+                    if (user != null) {
+                        driver = driverRepository.findByUserId(user.getId()).orElse(null);
+                    }
+                    
+                    final com.school.transport.module.drivers.entity.Driver finalDriver = driver;
+                    
+                    return com.school.transport.module.routes.dto.RouteDriverAssignmentResponse.builder()
+                            .id(assignment.getId())
+                            .routeId(assignment.getRouteId())
+                            .driverId(assignment.getDriverId())
+                            .activeFrom(assignment.getActiveFrom())
+                            .activeTo(assignment.getActiveTo())
+                            .driver(user != null ?
+                                com.school.transport.module.routes.dto.RouteDriverAssignmentResponse.DriverInfo.builder()
+                                    .id(user.getId())
+                                    .name(user.getName())
+                                    .phone(user.getPhone())
+                                    .vehicleNumber(finalDriver != null ? finalDriver.getVehicleNumber() : null)
+                                    .status(user.getStatus().toString())
+                                    .build()
+                                : null)
+                            .createdAt(assignment.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

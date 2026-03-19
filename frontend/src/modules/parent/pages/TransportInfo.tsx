@@ -152,17 +152,22 @@ export const TransportInfo: React.FC = () => {
           </Card>
         ) : (
           <>
-            {/* Live Map */}
+            {/* Live Map - Show first active route */}
             <Card>
               <CardHeader>
                 <CardTitle>Live Map</CardTitle>
                 <CardDescription>
-                  Real-time location of buses on your children's routes
+                  Real-time location of bus on your child's route
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {activeTracking.length > 0 ? (
-                  <LiveMap tracking={activeTracking} height="500px" />
+                  <LiveMap 
+                    routeId={activeTracking[0].routeId}
+                    routeName={activeTracking[0].routeName}
+                    vehicleNumber={activeTracking[0].vehicleNumber}
+                    height="500px" 
+                  />
                 ) : (
                   <div className="text-center py-12 bg-muted rounded-lg">
                     <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

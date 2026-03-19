@@ -14,10 +14,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-interface LiveMapProps {
-  routeId: string | null;
+interface TripLiveMapProps {
+  routeId: string;
   routeName?: string;
   vehicleNumber?: string;
+  driverName?: string;
   height?: string;
 }
 
@@ -47,10 +48,11 @@ const getHealthBadge = (status: HealthStatus) => {
   }
 };
 
-export const LiveMap: React.FC<LiveMapProps> = ({ 
+export const TripLiveMap: React.FC<TripLiveMapProps> = ({ 
   routeId, 
   routeName, 
   vehicleNumber,
+  driverName,
   height = '500px' 
 }) => {
   const mapRef = useRef<L.Map | null>(null);
@@ -61,7 +63,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   const { data, healthStatus, lastUpdated, isLoading, error } = useLiveTracking({
     routeId,
     pollingInterval: 10000,
-    enabled: !!routeId,
+    enabled: true,
   });
 
   useEffect(() => {
@@ -131,8 +133,10 @@ export const LiveMap: React.FC<LiveMapProps> = ({
     const popupContent = `
       <div class="p-2">
         <h3 class="font-semibold text-sm mb-1">${routeName || 'Route'}</h3>
+        ${driverName ? `<p class="text-xs text-gray-600 mb-1">Driver: ${driverName}</p>` : ''}
         <p class="text-xs text-gray-600 mb-1">Vehicle: ${vehicleNumber || 'N/A'}</p>
         <p class="text-xs text-gray-600 mb-1">Speed: ${data.speed || 0} km/h</p>
+        <p class="text-xs text-gray-600 mb-1">Trip Type: ${data.trip_type}</p>
         <p class="text-xs text-gray-500">Last updated: ${new Date(data.updated_at).toLocaleTimeString()}</p>
       </div>
     `;
@@ -140,12 +144,12 @@ export const LiveMap: React.FC<LiveMapProps> = ({
 
     // Center map on marker
     map.setView(position, 14);
-  }, [data, routeName, vehicleNumber]);
+  }, [data, routeName, vehicleNumber, driverName]);
 
   return (
     <div className="space-y-3">
       {/* Status Bar */}
-      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-3">
           <div className="text-sm">
             <span className="font-medium">GPS Status:</span>
@@ -153,18 +157,43 @@ export const LiveMap: React.FC<LiveMapProps> = ({
           {getHealthBadge(healthStatus)}
         </div>
         <div className="text-sm text-muted-foreground">
-          {lastUpdated && (
-            <span>Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}</span>
+          {data && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span>Last updated: {formatDistanceToNow(new Date(data.updated_at), { addSuffix: true })}</span>
+              {isLoading && <span className="text-xs">(Updating...)</span>}
+            </div>
           )}
-          {isLoading && <span className="ml-2">Updating...</span>}
+          {!data && !error && <span>Waiting for GPS data...</span>}
         </div>
       </div>
+
+      {/* Additional Info Bar */}
+      {data && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-muted/30 rounded-lg">
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Speed</p>
+            <p className="text-sm font-semibold">{data.speed || 0} km/h</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Trip Type</p>
+            <p className="text-sm font-semibold">{data.trip_type}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Latitude</p>
+            <p className="text-sm font-semibold">{data.lat.toFixed(4)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Longitude</p>
+            <p className="text-sm font-semibold">{data.lng.toFixed(4)}</p>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
         <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive">
-            Failed to fetch live tracking data. Retrying...
+            Failed to fetch live tracking data. Retrying automatically...
           </p>
         </div>
       )}

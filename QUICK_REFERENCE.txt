@@ -32,11 +32,13 @@ POST /api/gps/update                      - Send GPS
 POST /api/v1/trips/{id}/end               - End trip
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧪 QUICK TESTS
+🧪 QUICK TESTS & UTILITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ./test-database-connection.sh    - Verify database
 ./test-driver-student-sync.sh    - Test complete sync
 ./verify-no-mock-data.sh         - Verify real data only
+./quick-cleanup-trips.sh         - Quick: End all active trips (no prompts)
+./cleanup-active-trips.sh        - Interactive: End active trips with confirmation
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ VERIFIED WORKING

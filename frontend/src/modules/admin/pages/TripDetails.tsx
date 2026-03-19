@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
-import { LiveMap } from '@/modules/parent/components/LiveMap';
+import { TripLiveMap } from '../components/TripLiveMap';
 import { CorrectAttendanceDialog } from '../components/CorrectAttendanceDialog';
 import { AuditLogViewer } from '../components/AuditLogViewer';
 import { adminService } from '@/services/admin.service';
@@ -255,31 +255,23 @@ export const TripDetails: React.FC = () => {
             </div>
 
             {/* Live Map */}
-            {trip.currentLocation && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Live Location</CardTitle>
-                  <CardDescription>
-                    Real-time bus location on the map
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <LiveMap
-                    tracking={[{
-                      routeId: trip.routeId,
-                      routeName: trip.routeName,
-                      vehicleNumber: trip.vehicleNumber,
-                      driverName: trip.driverName,
-                      driverPhone: trip.driverPhone,
-                      currentLocation: trip.currentLocation,
-                      tripStatus: 'ACTIVE',
-                      lastUpdated: trip.lastGPSPing,
-                    }]}
-                    height="400px"
-                  />
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Live Location</CardTitle>
+                <CardDescription>
+                  Real-time bus location with GPS health monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TripLiveMap
+                  routeId={trip.routeId}
+                  routeName={trip.routeName}
+                  vehicleNumber={trip.vehicleNumber}
+                  driverName={trip.driverName}
+                  height="500px"
+                />
+              </CardContent>
+            </Card>
 
             {/* Attendance */}
             <Card>

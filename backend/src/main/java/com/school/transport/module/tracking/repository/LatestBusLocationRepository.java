@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface LatestBusLocationRepository extends JpaRepository<LatestBusLocation, UUID> {
     
     Optional<LatestBusLocation> findByTripId(UUID tripId);
+    
+    Optional<LatestBusLocation> findByRouteId(UUID routeId);
 }

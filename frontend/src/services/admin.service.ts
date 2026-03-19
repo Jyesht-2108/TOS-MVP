@@ -152,7 +152,7 @@ class AdminService {
     }
 
     try {
-      const response = await api.get<import('@/types').ActiveTrip[]>('/admin/trips/active');
+      const response = await api.get<import('@/types').ActiveTrip[]>('/trips/active');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch active trips:', error);
