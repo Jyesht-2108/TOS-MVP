@@ -410,6 +410,42 @@ export const setupMockApi = (api: AxiosInstance) => {
         });
       }
 
+      // Mock GET /admin/live-trips (Active Trips Monitoring)
+      if (method === 'get' && url === '/admin/live-trips') {
+        const { getMockActiveTrips } = await import('./mockData');
+        const activeTrips = getMockActiveTrips();
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: activeTrips,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock GET /admin/trips/active (Alternative endpoint)
+      if (method === 'get' && url === '/admin/trips/active') {
+        const { getMockActiveTrips } = await import('./mockData');
+        const activeTrips = getMockActiveTrips();
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: activeTrips,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
       // Mock GET /parent/dashboard/stats
       if (method === 'get' && url === '/parent/dashboard/stats') {
         const parentStats = {
@@ -475,6 +511,64 @@ export const setupMockApi = (api: AxiosInstance) => {
             config,
           },
         });
+      }
+
+      // Mock GET /attendance?trip_id={tripId}
+      if (method === 'get' && url === '/attendance') {
+        const tripId = config.params?.trip_id;
+        const { getMockTripAttendance } = await import('./mockData');
+        const attendance = getMockTripAttendance(tripId);
+        
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: attendance,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          },
+        });
+      }
+
+      // Mock PATCH /admin/attendance/:attendanceId
+      if (method === 'patch' && url?.match(/^\/admin\/attendance\/[^/]+$/)) {
+        const attendanceId = url.split('/')[3];
+        const { status, reason } = config.data;
+        const { updateMockAttendance } = await import('./mockData');
+        
+        const updatedAttendance = updateMockAttendance(attendanceId, status, reason);
+        
+        if (updatedAttendance) {
+          return Promise.reject({
+            __isMockResponse: true,
+            config,
+            response: {
+              data: {
+                success: true,
+                message: 'Attendance updated successfully',
+                attendance: updatedAttendance,
+              },
+              status: 200,
+              statusText: 'OK',
+              headers: {},
+              config,
+            },
+          });
+        } else {
+          return Promise.reject({
+            __isMockResponse: true,
+            config,
+            response: {
+              data: { message: 'Attendance record not found' },
+              status: 404,
+              statusText: 'Not Found',
+              headers: {},
+              config,
+            },
+          });
+        }
       }
 
       // Mock GET /parent/children/:childId

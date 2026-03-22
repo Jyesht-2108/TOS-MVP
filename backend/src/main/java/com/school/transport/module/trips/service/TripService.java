@@ -2,11 +2,16 @@ package com.school.transport.module.trips.service;
 
 import com.school.transport.common.exception.NotFoundException;
 import com.school.transport.common.exception.ValidationException;
+import com.school.transport.module.attendance.repository.AttendanceRepository;
+import com.school.transport.module.routes.entity.Route;
 import com.school.transport.module.routes.repository.RouteRepository;
+import com.school.transport.module.routes.repository.RouteStudentRepository;
 import com.school.transport.module.trips.dto.StartTripRequest;
 import com.school.transport.module.trips.dto.TripResponse;
 import com.school.transport.module.trips.entity.Trip;
 import com.school.transport.module.trips.repository.TripRepository;
+import com.school.transport.module.auth.entity.User;
+import com.school.transport.module.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,9 @@ public class TripService {
 
     private final TripRepository tripRepository;
     private final RouteRepository routeRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final RouteStudentRepository routeStudentRepository;
+    private final UserRepository userRepository;
 
     /**
      * Start a new trip
@@ -151,15 +159,37 @@ public class TripService {
      * Map Trip entity to TripResponse DTO
      */
     private TripResponse mapToTripResponse(Trip trip) {
+        // Fetch route name
+        String routeName = routeRepository.findById(trip.getRouteId())
+                .map(Route::getName)
+                .orElse("Unknown Route");
+        
+        // Fetch driver name
+        String driverName = userRepository.findById(trip.getDriverId())
+                .map(User::getName)
+                .orElse("Unknown Driver");
+        
+        // Fetch attendance counts
+        long presentCount = attendanceRepository.countPresentByTripId(trip.getId());
+        long absentCount = attendanceRepository.countAbsentByTripId(trip.getId());
+        
+        // Fetch total students on route
+        long totalStudents = routeStudentRepository.countByRouteId(trip.getRouteId());
+        
         return TripResponse.builder()
                 .id(trip.getId())
                 .routeId(trip.getRouteId())
+                .routeName(routeName)
                 .driverId(trip.getDriverId())
+                .driverName(driverName)
                 .tripType(trip.getTripType())
                 .tripDate(trip.getTripDate())
                 .startTime(trip.getStartTime())
                 .endTime(trip.getEndTime())
                 .status(trip.getStatus())
+                .totalStudents((int) totalStudents)
+                .presentCount((int) presentCount)
+                .absentCount((int) absentCount)
                 .createdAt(trip.getCreatedAt())
                 .build();
     }

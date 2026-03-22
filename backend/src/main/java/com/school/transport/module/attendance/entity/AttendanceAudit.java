@@ -34,11 +34,11 @@ public class AttendanceAudit {
     private UUID studentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "old_status", nullable = false, columnDefinition = "attendance_status_enum")
+    @Column(name = "old_status")
     private Attendance.AttendanceStatus oldStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "new_status", nullable = false, columnDefinition = "attendance_status_enum")
+    @Column(name = "new_status")
     private Attendance.AttendanceStatus newStatus;
 
     @Column(name = "reason", nullable = false, columnDefinition = "TEXT")

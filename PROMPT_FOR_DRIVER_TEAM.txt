@@ -1,0 +1,37 @@
+Hi Driver App Team,
+
+I need help debugging an attendance sync issue between the driver app and admin portal.
+
+When you marked attendance for "Route B - Evening", the admin portal is not showing the updated data.
+
+Please provide the following information:
+
+1. **Trip ID**: What trip_id was returned when you started the trip?
+
+2. **API Endpoint**: What endpoint did you call to mark attendance?
+   Example: POST /api/v1/attendance/mark
+
+3. **Request Payload**: What data did you send?
+   Example:
+   {
+     "tripId": "xxx",
+     "studentId": "yyy",
+     "status": "PRESENT"
+   }
+
+4. **Response**: What response did you get?
+   - Status code (200, 201, etc.)
+   - Response body
+
+5. **Students**: Which students did you mark?
+   - Student names and IDs
+   - Status (PRESENT/ABSENT)
+
+6. **Database Check**: Can you run this query and share results?
+   SELECT * FROM attendance WHERE trip_id = 'your-trip-id';
+
+7. **Backend Logs**: Any errors in the backend logs when marking attendance?
+
+This will help us identify where the sync is breaking.
+
+Thanks!

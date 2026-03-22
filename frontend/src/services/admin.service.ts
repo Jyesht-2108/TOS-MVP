@@ -152,8 +152,28 @@ class AdminService {
     }
 
     try {
-      const response = await api.get<import('@/types').ActiveTrip[]>('/trips/active');
-      return response.data;
+      const response = await api.get<any[]>('/admin/trips/active');
+      // Transform backend response to match frontend ActiveTrip interface
+      return response.data.map((trip: any) => ({
+        tripId: trip.id,
+        routeId: trip.routeId,
+        routeName: trip.routeName,
+        driverId: trip.driverId,
+        driverName: trip.driverName,
+        vehicleNumber: trip.vehicleNumber,
+        driverPhone: trip.driverPhone,
+        tripType: trip.tripType,
+        startTime: trip.startTime,
+        endTime: trip.endTime,
+        lastGPSPing: trip.startTime, // TODO: Get actual GPS ping from backend
+        gpsHealthStatus: 'HEALTHY' as const, // TODO: Calculate from GPS data
+        totalStudents: trip.totalStudents || 0,
+        presentStudents: trip.presentCount || 0,
+        absentStudents: trip.absentCount || 0,
+        pendingStudents: trip.totalStudents - (trip.presentCount || 0) - (trip.absentCount || 0),
+        attendance: [], // Will be fetched separately
+        status: trip.status,
+      }));
     } catch (error) {
       console.error('Failed to fetch active trips:', error);
       throw error;
@@ -337,8 +357,27 @@ class AdminService {
     }
 
     try {
-      const response = await api.get<import('@/types').ActiveTrip>(`/admin/trips/${tripId}`);
-      return response.data;
+      const response = await api.get<any>(`/admin/trips/${tripId}`);
+      const trip = response.data;
+      // Transform backend response to match frontend ActiveTrip interface
+      return {
+        tripId: trip.id,
+        routeId: trip.routeId,
+        routeName: trip.routeName,
+        driverId: trip.driverId,
+        driverName: trip.driverName,
+        tripType: trip.tripType,
+        startTime: trip.startTime,
+        endTime: trip.endTime,
+        lastGPSPing: trip.startTime, // TODO: Get actual GPS ping from backend
+        gpsHealthStatus: 'HEALTHY' as const, // TODO: Calculate from GPS data
+        totalStudents: trip.totalStudents || 0,
+        presentStudents: trip.presentCount || 0,
+        absentStudents: trip.absentCount || 0,
+        pendingStudents: trip.totalStudents - (trip.presentCount || 0) - (trip.absentCount || 0),
+        attendance: [], // Will be fetched separately
+        status: trip.status,
+      };
     } catch (error) {
       console.error('Failed to fetch trip details:', error);
       throw error;

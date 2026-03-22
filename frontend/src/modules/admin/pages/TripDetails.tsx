@@ -29,6 +29,7 @@ import { AnimatedPage } from '@/components/AnimatedPage';
 import { TripLiveMap } from '../components/TripLiveMap';
 import { CorrectAttendanceDialog } from '../components/CorrectAttendanceDialog';
 import { AuditLogViewer } from '../components/AuditLogViewer';
+import { TripAttendanceView } from '../components/TripAttendanceView';
 import { adminService } from '@/services/admin.service';
 import { ActiveTrip } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -273,80 +274,8 @@ export const TripDetails: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Attendance */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Student Attendance</CardTitle>
-                    <CardDescription>
-                      Attendance progress for this trip
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-500">{trip.presentStudents}</div>
-                      <div className="text-xs text-muted-foreground">Present</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-500">{trip.pendingStudents}</div>
-                      <div className="text-xs text-muted-foreground">Pending</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-500">{trip.absentStudents}</div>
-                      <div className="text-xs text-muted-foreground">Absent</div>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">Student Name</TableHead>
-                        <TableHead className="min-w-[120px]">Status</TableHead>
-                        <TableHead className="min-w-[120px]">Pickup Time</TableHead>
-                        <TableHead className="min-w-[200px]">Pickup Location</TableHead>
-                        <TableHead className="text-right min-w-[100px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {trip.attendance.map((attendance) => (
-                        <TableRow key={attendance.studentId}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getAttendanceIcon(attendance.status)}
-                              <span className="font-medium">{attendance.studentName}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{getAttendanceBadge(attendance.status)}</TableCell>
-                          <TableCell>
-                            <span className="text-sm">{attendance.pickupTime || 'N/A'}</span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {attendance.pickupLocation || 'N/A'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleCorrectAttendance(attendance)}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Correct
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Attendance - New Live Attendance View */}
+            <TripAttendanceView tripId={trip.tripId} />
 
             {/* Audit Log Viewer */}
             <AuditLogViewer tripId={trip.tripId} />

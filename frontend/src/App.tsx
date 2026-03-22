@@ -23,6 +23,12 @@ import { ParentDashboard } from '@/modules/parent/pages/Dashboard';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 
+// Load test utilities in development
+if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
+  import('@/lib/testAttendanceUpdate');
+  import('@/lib/testLiveTrips');
+}
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error: any) => {

@@ -478,78 +478,129 @@ export const getMockLiveTracking = (): import('@/types').LiveRouteTracking[] => 
 // Helper function to generate mock active trips for admin monitoring
 export const getMockActiveTrips = (): import('@/types').ActiveTrip[] => {
   const now = new Date();
-  const trips: import('@/types').ActiveTrip[] = [];
+  
+  // Filter mockTrips array for ACTIVE status trips
+  const activeTrips = mockTrips.filter(trip => trip.status === 'ACTIVE');
+  
+  // Transform Trip[] to ActiveTrip[] with additional live monitoring data
+  return activeTrips.map((trip, index) => {
+    // Find route details
+    const route = mockRoutes.find(r => r.id === trip.routeId);
+    
+    // Find driver details
+    const driver = mockDrivers.find(d => d.id === trip.driverId);
+    
+    // Get route students for attendance
+    const routeStudents = mockRouteStudents[trip.routeId] || [];
+    
+    // Generate GPS health status based on last ping
+    const lastPingSeconds = Math.floor(Math.random() * 120); // Random 0-120 seconds
+    let gpsHealthStatus: 'HEALTHY' | 'WARNING' | 'STALE';
+    if (lastPingSeconds < 30) gpsHealthStatus = 'HEALTHY';
+    else if (lastPingSeconds < 90) gpsHealthStatus = 'WARNING';
+    else gpsHealthStatus = 'STALE';
 
-  mockRoutes
-    .filter(route => route.status === 'ACTIVE')
-    .forEach((route, index) => {
-      const driverAssignment = mockDriverAssignments[route.id]?.[0];
-      const driver = driverAssignment?.driver;
-      const routeStudents = mockRouteStudents[route.id] || [];
+    const lastGPSPing = new Date(now.getTime() - lastPingSeconds * 1000).toISOString();
 
-      if (!driver) return;
+    // Get attendance data from mockTripAttendance if available
+    let attendance: import('@/types').TripAttendance[];
+    let presentStudents: number;
+    let absentStudents: number;
+    let pendingStudents: number;
 
-      // Generate GPS health status based on last ping
-      const lastPingSeconds = Math.floor(Math.random() * 120); // Random 0-120 seconds
-      let gpsHealthStatus: 'HEALTHY' | 'WARNING' | 'STALE';
-      if (lastPingSeconds < 30) gpsHealthStatus = 'HEALTHY';
-      else if (lastPingSeconds < 90) gpsHealthStatus = 'WARNING';
-      else gpsHealthStatus = 'STALE';
-
-      const lastGPSPing = new Date(now.getTime() - lastPingSeconds * 1000).toISOString();
-
-      // Generate attendance data
-      const attendance: import('@/types').TripAttendance[] = routeStudents.map(rs => ({
+    if (mockTripAttendance[trip.id]) {
+      // Use real attendance data from mockTripAttendance
+      const tripAttendance = mockTripAttendance[trip.id];
+      attendance = tripAttendance.attendance.map(att => ({
+        studentId: att.studentId,
+        studentName: att.studentName,
+        status: att.status === 'PRESENT' ? 'PRESENT' : att.status === 'ABSENT' ? 'ABSENT' : 'PENDING',
+        pickupTime: '07:30 AM',
+        pickupLocation: `${att.studentName}'s Home`,
+      }));
+      presentStudents = tripAttendance.presentCount;
+      absentStudents = tripAttendance.absentCount;
+      pendingStudents = tripAttendance.unmarkedCount;
+    } else {
+      // Use trip's attendance counts or generate from route students
+      presentStudents = trip.presentStudents || 0;
+      absentStudents = trip.absentStudents || 0;
+      pendingStudents = trip.totalStudents - presentStudents - absentStudents;
+      
+      attendance = routeStudents.map(rs => ({
         studentId: rs.studentId,
         studentName: rs.student?.name || 'Unknown',
-        status: Math.random() > 0.2 ? 'PRESENT' : (Math.random() > 0.5 ? 'ABSENT' : 'PENDING'),
+        status: 'PENDING' as const,
         pickupTime: '07:30 AM',
         pickupLocation: `${rs.student?.name}'s Home`,
       }));
+    }
 
-      const presentStudents = attendance.filter(a => a.status === 'PRESENT').length;
-      const absentStudents = attendance.filter(a => a.status === 'ABSENT').length;
-      const pendingStudents = attendance.filter(a => a.status === 'PENDING').length;
+    // Calculate average trip duration (mock: 45-60 minutes)
+    const averageTripDuration = 45 + Math.floor(Math.random() * 15);
+    
+    // Calculate estimated end time based on start time + average duration
+    const startTime = new Date(trip.startTime);
+    const estimatedEndTime = new Date(startTime.getTime() + averageTripDuration * 60 * 1000).toISOString();
 
-      // Calculate average trip duration (mock: 45-60 minutes)
-      const averageTripDuration = 45 + Math.floor(Math.random() * 15);
-      
-      // Calculate estimated end time based on start time + average duration
-      const startTime = new Date(now.getTime() - 30 * 60 * 1000); // Started 30 mins ago
-      const estimatedEndTime = new Date(startTime.getTime() + averageTripDuration * 60 * 1000).toISOString();
-
-      trips.push({
-        tripId: `trip-${route.id}-morning`,
-        routeId: route.id,
-        routeName: route.name,
-        vehicleNumber: driver.vehicleNumber,
-        driverId: driver.id,
-        driverName: driver.name,
-        driverPhone: driver.phone,
-        tripType: 'MORNING',
-        startTime: startTime.toISOString(),
-        estimatedEndTime,
-        averageTripDuration,
-        currentLocation: {
-          latitude: 40.7128 + (index * 0.05),
-          longitude: -74.0060 + (index * 0.05),
-          timestamp: lastGPSPing,
-          speed: 25 + (index * 5),
-          heading: 90 + (index * 45),
-        },
-        lastGPSPing,
-        gpsHealthStatus,
-        totalStudents: routeStudents.length,
-        presentStudents,
-        absentStudents,
-        pendingStudents,
-        attendance,
-        status: 'ACTIVE',
-      });
-    });
-
-  return trips;
+    return {
+      tripId: trip.id,
+      routeId: trip.routeId,
+      routeName: trip.routeName || route?.name || 'Unknown Route',
+      vehicleNumber: trip.vehicleNumber || driver?.vehicleNumber,
+      driverId: trip.driverId,
+      driverName: trip.driverName || driver?.name || 'Unknown Driver',
+      driverPhone: driver?.phone,
+      tripType: trip.tripType === 'PICKUP' ? 'MORNING' : 'EVENING',
+      startTime: trip.startTime,
+      endTime: trip.endTime,
+      estimatedEndTime,
+      averageTripDuration,
+      currentLocation: {
+        latitude: 40.7128 + (index * 0.05),
+        longitude: -74.0060 + (index * 0.05),
+        timestamp: lastGPSPing,
+        speed: 25 + (index * 5),
+        heading: 90 + (index * 45),
+      },
+      lastGPSPing,
+      gpsHealthStatus,
+      totalStudents: trip.totalStudents,
+      presentStudents,
+      absentStudents,
+      pendingStudents,
+      attendance,
+      status: trip.status,
+    };
+  });
 };
+
+// Helper function to start a trip (for testing)
+export const startMockTrip = (tripId: string) => {
+  const trip = mockTrips.find(t => t.id === tripId);
+  if (trip) {
+    trip.status = 'ACTIVE';
+    trip.startTime = new Date().toISOString();
+    console.log(`🚌 Trip started: ${trip.routeName} (${trip.tripType})`);
+  }
+};
+
+// Helper function to end a trip (for testing)
+export const endMockTrip = (tripId: string) => {
+  const trip = mockTrips.find(t => t.id === tripId);
+  if (trip) {
+    trip.status = 'COMPLETED';
+    trip.endTime = new Date().toISOString();
+    console.log(`🏁 Trip ended: ${trip.routeName} (${trip.tripType})`);
+  }
+};
+
+// Expose helper functions to window for console testing
+if (typeof window !== 'undefined') {
+  (window as any).startMockTrip = startMockTrip;
+  (window as any).endMockTrip = endMockTrip;
+  (window as any).getMockActiveTrips = getMockActiveTrips;
+}
 
 // Helper function to generate mock driver activity
 export const getMockDriverActivity = (): import('@/types').DriverActivity[] => {
@@ -1447,4 +1498,202 @@ export const getDriverAttendanceSummary = (driverId: string): import('@/types').
 export const getTodayDriverAttendance = (): import('@/types').DriverAttendanceRecord[] => {
   const today = new Date().toISOString().split('T')[0];
   return mockDriverAttendance.filter(att => att.date === today);
+};
+
+// ============================================================================
+// TRIP ATTENDANCE MOCK DATA
+// ============================================================================
+
+// Mock trip attendance data - stored globally so it can be updated
+export const mockTripAttendance: Record<string, {
+  tripId: string;
+  totalStudents: number;
+  presentCount: number;
+  absentCount: number;
+  unmarkedCount: number;
+  attendance: Array<{
+    id: string;
+    tripId: string;
+    studentId: string;
+    studentName: string;
+    status: 'PRESENT' | 'ABSENT' | null;
+    markedAt: string | null;
+    markedBy: string | null;
+    locked: boolean;
+  }>;
+}> = {
+  'trip-1': {
+    tripId: 'trip-1',
+    totalStudents: 3,
+    presentCount: 2,
+    absentCount: 0,
+    unmarkedCount: 1,
+    attendance: [
+      {
+        id: 'att-1',
+        tripId: 'trip-1',
+        studentId: 'student-1',
+        studentName: 'Emma Johnson',
+        status: 'PRESENT',
+        markedAt: new Date(Date.now() - 1800000).toISOString(), // 30 mins ago
+        markedBy: 'driver-1',
+        locked: false,
+      },
+      {
+        id: 'att-2',
+        tripId: 'trip-1',
+        studentId: 'student-2',
+        studentName: 'Liam Smith',
+        status: 'PRESENT',
+        markedAt: new Date(Date.now() - 1500000).toISOString(), // 25 mins ago
+        markedBy: 'driver-1',
+        locked: false,
+      },
+      {
+        id: 'att-3',
+        tripId: 'trip-1',
+        studentId: 'student-3',
+        studentName: 'Olivia Brown',
+        status: null,
+        markedAt: null,
+        markedBy: null,
+        locked: false,
+      },
+    ],
+  },
+  'trip-2': {
+    tripId: 'trip-2',
+    totalStudents: 2,
+    presentCount: 1,
+    absentCount: 1,
+    unmarkedCount: 0,
+    attendance: [
+      {
+        id: 'att-4',
+        tripId: 'trip-2',
+        studentId: 'student-4',
+        studentName: 'Noah Davis',
+        status: 'PRESENT',
+        markedAt: new Date(Date.now() - 2400000).toISOString(), // 40 mins ago
+        markedBy: 'driver-2',
+        locked: false,
+      },
+      {
+        id: 'att-5',
+        tripId: 'trip-2',
+        studentId: 'student-5',
+        studentName: 'Ava Wilson',
+        status: 'ABSENT',
+        markedAt: new Date(Date.now() - 2100000).toISOString(), // 35 mins ago
+        markedBy: 'driver-2',
+        locked: false,
+      },
+    ],
+  },
+};
+
+// Helper function to get trip attendance
+export const getMockTripAttendance = (tripId: string) => {
+  // Return the current state from the global object
+  const attendance = mockTripAttendance[tripId];
+  
+  if (!attendance) {
+    // Return empty attendance for unknown trips
+    return {
+      tripId,
+      totalStudents: 0,
+      presentCount: 0,
+      absentCount: 0,
+      unmarkedCount: 0,
+      attendance: [],
+    };
+  }
+  
+  // Recalculate counts based on current status
+  const presentCount = attendance.attendance.filter(a => a.status === 'PRESENT').length;
+  const absentCount = attendance.attendance.filter(a => a.status === 'ABSENT').length;
+  const unmarkedCount = attendance.attendance.filter(a => a.status === null).length;
+  
+  return {
+    ...attendance,
+    presentCount,
+    absentCount,
+    unmarkedCount,
+  };
+};
+
+// Helper function to update attendance (for admin override)
+export const updateMockAttendance = (
+  attendanceId: string,
+  newStatus: 'PRESENT' | 'ABSENT',
+  reason: string
+) => {
+  // Find the attendance record across all trips
+  for (const tripId in mockTripAttendance) {
+    const trip = mockTripAttendance[tripId];
+    const attendanceIndex = trip.attendance.findIndex(a => a.id === attendanceId);
+    
+    if (attendanceIndex !== -1) {
+      const attendance = trip.attendance[attendanceIndex];
+      
+      // Update the attendance record
+      attendance.status = newStatus;
+      attendance.markedAt = new Date().toISOString();
+      attendance.markedBy = 'admin-1'; // Admin user
+      
+      // Recalculate counts
+      const presentCount = trip.attendance.filter(a => a.status === 'PRESENT').length;
+      const absentCount = trip.attendance.filter(a => a.status === 'ABSENT').length;
+      const unmarkedCount = trip.attendance.filter(a => a.status === null).length;
+      
+      trip.presentCount = presentCount;
+      trip.absentCount = absentCount;
+      trip.unmarkedCount = unmarkedCount;
+      
+      console.log(`✅ Mock attendance updated: ${attendance.studentName} -> ${newStatus} (Reason: ${reason})`);
+      console.log(`📊 New counts - Present: ${presentCount}, Absent: ${absentCount}, Unmarked: ${unmarkedCount}`);
+      
+      return attendance;
+    }
+  }
+  
+  return null;
+};
+
+// Helper function to mark attendance (for driver app simulation)
+export const markMockAttendance = (
+  attendanceId: string,
+  status: 'PRESENT' | 'ABSENT',
+  driverId: string
+) => {
+  // Find the attendance record across all trips
+  for (const tripId in mockTripAttendance) {
+    const trip = mockTripAttendance[tripId];
+    const attendanceIndex = trip.attendance.findIndex(a => a.id === attendanceId);
+    
+    if (attendanceIndex !== -1) {
+      const attendance = trip.attendance[attendanceIndex];
+      
+      // Update the attendance record
+      attendance.status = status;
+      attendance.markedAt = new Date().toISOString();
+      attendance.markedBy = driverId;
+      
+      // Recalculate counts
+      const presentCount = trip.attendance.filter(a => a.status === 'PRESENT').length;
+      const absentCount = trip.attendance.filter(a => a.status === 'ABSENT').length;
+      const unmarkedCount = trip.attendance.filter(a => a.status === null).length;
+      
+      trip.presentCount = presentCount;
+      trip.absentCount = absentCount;
+      trip.unmarkedCount = unmarkedCount;
+      
+      console.log(`✅ Mock attendance marked by driver: ${attendance.studentName} -> ${status}`);
+      console.log(`📊 New counts - Present: ${presentCount}, Absent: ${absentCount}, Unmarked: ${unmarkedCount}`);
+      
+      return attendance;
+    }
+  }
+  
+  return null;
 };

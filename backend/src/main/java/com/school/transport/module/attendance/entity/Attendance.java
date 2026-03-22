@@ -31,7 +31,7 @@ public class Attendance {
     private UUID studentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "attendance_status_enum")
+    @Column(name = "status", nullable = false)
     private AttendanceStatus status;
 
     @Column(name = "locked", nullable = false)
