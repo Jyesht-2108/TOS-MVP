@@ -8,7 +8,10 @@ import com.school.transport.module.drivers.entity.Driver;
 import com.school.transport.module.drivers.repository.DriverRepository;
 import com.school.transport.module.routes.dto.RouteResponse;
 import com.school.transport.module.routes.entity.Route;
+import com.school.transport.module.routes.entity.RouteDriverAssignment;
 import com.school.transport.module.routes.repository.RouteRepository;
+import com.school.transport.module.routes.repository.RouteDriverAssignmentRepository;
+import com.school.transport.module.routes.repository.RouteStudentRepository;
 import com.school.transport.module.students.dto.StudentResponse;
 import com.school.transport.module.students.entity.Student;
 import com.school.transport.module.students.repository.StudentRepository;
@@ -23,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,6 +41,8 @@ public class AdminService {
     private final TripRepository tripRepository;
     private final TripService tripService;
     private final UserRepository userRepository;
+    private final RouteDriverAssignmentRepository routeDriverAssignmentRepository;
+    private final RouteStudentRepository routeStudentRepository;
     
     private static final UUID MOCK_TENANT_ID = UUID.fromString("a0000000-0000-0000-0000-000000000001");
     
@@ -126,13 +132,36 @@ public class AdminService {
         List<Route> routes = routeRepository.findAll();
         
         return routes.stream()
-                .map(route -> RouteResponse.builder()
-                        .id(route.getId())
-                        .name(route.getName())
-                        .status(route.getStatus())
-                        .createdAt(route.getCreatedAt())
-                        .updatedAt(route.getUpdatedAt())
-                        .build())
+                .map(route -> {
+                    // Get active driver assignment
+                    Optional<RouteDriverAssignment> activeAssignment = 
+                            routeDriverAssignmentRepository.findActiveAssignmentByRouteId(route.getId());
+                    
+                    UUID driverId = null;
+                    String driverName = null;
+                    
+                    if (activeAssignment.isPresent()) {
+                        driverId = activeAssignment.get().getDriverId();
+                        // Fetch driver name from users table
+                        User driver = userRepository.findById(driverId).orElse(null);
+                        driverName = driver != null ? driver.getName() : null;
+                    }
+                    
+                    // Get student count
+                    int studentCount = (int) routeStudentRepository.countByRouteId(route.getId());
+                    
+                    return RouteResponse.builder()
+                            .id(route.getId())
+                            .tenantId(route.getTenantId())
+                            .name(route.getName())
+                            .status(route.getStatus())
+                            .driverId(driverId)
+                            .driverName(driverName)
+                            .studentCount(studentCount)
+                            .createdAt(route.getCreatedAt())
+                            .updatedAt(route.getUpdatedAt())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 }

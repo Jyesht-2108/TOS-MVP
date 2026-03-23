@@ -282,6 +282,17 @@ public class RouteService {
                 .findActiveAssignmentByRouteId(route.getId())
                 .orElse(null);
         
+        // Get driver name if assigned
+        UUID driverId = null;
+        String driverName = null;
+        
+        if (activeDriver != null) {
+            driverId = activeDriver.getDriverId();
+            // Fetch driver name from users table
+            var driver = userRepository.findById(driverId).orElse(null);
+            driverName = driver != null ? driver.getName() : null;
+        }
+        
         // Get student count
         long studentCount = routeStudentRepository.countByRouteId(route.getId());
         
@@ -290,8 +301,8 @@ public class RouteService {
                 .tenantId(route.getTenantId())
                 .name(route.getName())
                 .status(route.getStatus())
-                .driverId(activeDriver != null ? activeDriver.getDriverId() : null)
-                .driverName(null) // TODO: Fetch from user service when implemented
+                .driverId(driverId)
+                .driverName(driverName)
                 .studentCount((int) studentCount)
                 .createdAt(route.getCreatedAt())
                 .updatedAt(route.getUpdatedAt())
