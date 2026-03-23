@@ -25,7 +25,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ tripId }) => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const getStatusBadge = (status: 'PRESENT' | 'ABSENT' | 'PENDING') => {
+  const getStatusBadge = (status: 'PRESENT' | 'ABSENT' | 'PENDING' | null) => {
+    if (status === null) {
+      return <Badge variant="secondary">Unmarked</Badge>;
+    }
     switch (status) {
       case 'PRESENT':
         return <Badge variant="default" className="bg-green-500">Present</Badge>;

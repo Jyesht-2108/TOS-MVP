@@ -18,7 +18,7 @@ export interface AttendanceSummary {
   presentCount: number;
   absentCount: number;
   unmarkedCount: number;
-  attendance: AttendanceRecord[];
+  students: AttendanceRecord[];
 }
 
 export interface AdminOverrideRequest {

@@ -205,7 +205,7 @@ export interface AttendanceAuditLog {
   tripId: string;
   studentId: string;
   studentName: string;
-  oldStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
+  oldStatus: 'PRESENT' | 'ABSENT' | 'PENDING' | null;
   newStatus: 'PRESENT' | 'ABSENT' | 'PENDING';
   reason: string;
   editedBy: string;

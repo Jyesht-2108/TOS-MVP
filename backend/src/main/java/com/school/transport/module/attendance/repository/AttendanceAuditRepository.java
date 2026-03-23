@@ -16,6 +16,8 @@ public interface AttendanceAuditRepository extends JpaRepository<AttendanceAudit
     
     List<AttendanceAudit> findByTripId(UUID tripId);
     
+    List<AttendanceAudit> findByTripIdOrderByEditedAtDesc(UUID tripId);
+    
     List<AttendanceAudit> findByStudentId(UUID studentId);
     
     List<AttendanceAudit> findByTripIdAndStudentId(UUID tripId, UUID studentId);

@@ -142,7 +142,7 @@ export const TripAttendanceView: React.FC<TripAttendanceViewProps> = ({ tripId }
     return null;
   }
 
-  const { totalStudents, presentCount, absentCount, unmarkedCount, attendance = [] } = attendanceData;
+  const { totalStudents, presentCount, absentCount, unmarkedCount, students = [] } = attendanceData;
 
   return (
     <div className="space-y-6">
@@ -193,7 +193,7 @@ export const TripAttendanceView: React.FC<TripAttendanceViewProps> = ({ tripId }
           </div>
         </CardHeader>
         <CardContent>
-          {!attendance || attendance.length === 0 ? (
+          {!students || students.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg font-semibold">No Students Assigned</p>
@@ -203,7 +203,7 @@ export const TripAttendanceView: React.FC<TripAttendanceViewProps> = ({ tripId }
             </div>
           ) : (
             <div className="space-y-2">
-              {attendance.map((record, index) => (
+              {students.map((record, index) => (
                 <motion.div
                   key={record.id}
                   initial={{ opacity: 0, x: -20 }}

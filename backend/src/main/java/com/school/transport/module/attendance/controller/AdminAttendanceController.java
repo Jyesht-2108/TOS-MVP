@@ -2,6 +2,7 @@ package com.school.transport.module.attendance.controller;
 
 import com.school.transport.common.dto.ApiResponse;
 import com.school.transport.module.attendance.dto.AdminOverrideRequest;
+import com.school.transport.module.attendance.dto.AttendanceAuditResponse;
 import com.school.transport.module.attendance.dto.AttendanceResponse;
 import com.school.transport.module.attendance.service.AttendanceService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -44,5 +46,20 @@ public class AdminAttendanceController {
         );
         
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Get attendance audit log for a trip
+     * GET /api/v1/admin/attendance/audit?trip_id={tripId}
+     */
+    @GetMapping("/audit")
+    public ResponseEntity<ApiResponse<List<AttendanceAuditResponse>>> getAuditLog(
+            @RequestParam("trip_id") UUID tripId) {
+        
+        log.info("Fetching attendance audit log for trip: {}", tripId);
+        
+        List<AttendanceAuditResponse> auditLog = attendanceService.getAttendanceAuditLog(tripId);
+        
+        return ResponseEntity.ok(ApiResponse.success(auditLog));
     }
 }

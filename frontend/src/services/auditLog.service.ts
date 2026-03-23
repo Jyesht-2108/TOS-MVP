@@ -79,8 +79,13 @@ class AuditLogService {
     }
 
     try {
-      const response = await api.get<AttendanceAuditLog[]>(`/admin/trips/${tripId}/audit-logs`);
-      return response.data;
+      const response = await api.get<{ success: boolean; data: AttendanceAuditLog[] }>(
+        '/admin/attendance/audit',
+        {
+          params: { trip_id: tripId }
+        }
+      );
+      return response.data.data;
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
       throw error;

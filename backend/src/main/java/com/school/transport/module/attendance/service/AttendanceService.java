@@ -28,6 +28,7 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final AttendanceAuditRepository attendanceAuditRepository;
     private final StudentRepository studentRepository;
+    private final com.school.transport.module.auth.repository.UserRepository userRepository;
 
     /**
      * Get attendance summary for a trip with student details
@@ -161,4 +162,62 @@ public class AttendanceService {
         
         return getAttendanceById(attendanceId);
     }
+
+    /**
+     * Get attendance audit log for a trip
+     */
+    @Transactional(readOnly = true)
+    public List<com.school.transport.module.attendance.dto.AttendanceAuditResponse> getAttendanceAuditLog(UUID tripId) {
+        log.info("Fetching attendance audit log for trip: {}", tripId);
+
+        List<AttendanceAudit> auditLogs = attendanceAuditRepository.findByTripIdOrderByEditedAtDesc(tripId);
+
+        if (auditLogs.isEmpty()) {
+            log.info("No audit logs found for trip: {}", tripId);
+            return List.of();
+        }
+
+        // Get all student IDs
+        List<UUID> studentIds = auditLogs.stream()
+                .map(AttendanceAudit::getStudentId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Fetch student details
+        Map<UUID, Student> studentMap = studentRepository.findAllById(studentIds).stream()
+                .collect(Collectors.toMap(Student::getId, s -> s));
+
+        // Get all editor IDs
+        List<UUID> editorIds = auditLogs.stream()
+                .map(AttendanceAudit::getEditedBy)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Fetch editor details from users table
+        Map<UUID, String> editorMap = userRepository.findAllById(editorIds).stream()
+                .collect(Collectors.toMap(
+                    com.school.transport.module.auth.entity.User::getId,
+                    com.school.transport.module.auth.entity.User::getName
+                ));
+
+        return auditLogs.stream()
+                .map(audit -> {
+                    Student student = studentMap.get(audit.getStudentId());
+                    return com.school.transport.module.attendance.dto.AttendanceAuditResponse.builder()
+                            .id(audit.getId())
+                            .attendanceId(audit.getAttendanceId())
+                            .tripId(audit.getTripId())
+                            .studentId(audit.getStudentId())
+                            .studentName(student != null ? student.getName() : "Unknown")
+                            .oldStatus(audit.getOldStatus())
+                            .newStatus(audit.getNewStatus())
+                            .reason(audit.getReason())
+                            .editedBy(audit.getEditedBy())
+                            .editedByName(editorMap.get(audit.getEditedBy()))
+                            .editedAt(audit.getEditedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
 }
