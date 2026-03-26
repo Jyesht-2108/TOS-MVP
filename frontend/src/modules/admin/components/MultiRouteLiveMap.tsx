@@ -1,17 +1,8 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { trackingService, LiveTrackingResponse } from '@/services/tracking.service';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
-
-// Fix for default marker icons in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import { CheckCircle, Clock, AlertCircle, Bus } from 'lucide-react';
 
 interface RouteInfo {
   routeId: string;
@@ -32,6 +23,24 @@ interface RouteTrackingData {
   healthStatus: HealthStatus;
 }
 
+const mapContainerStyle = {
+  width: '100%',
+  height: '600px',
+};
+
+const defaultCenter = {
+  lat: 12.9862666,
+  lng: 77.7172536,
+};
+
+const mapOptions: google.maps.MapOptions = {
+  disableDefaultUI: false,
+  zoomControl: true,
+  mapTypeControl: false,
+  streetViewControl: false,
+  fullscreenControl: true,
+};
+
 const calculateHealthStatus = (updatedAt: string): HealthStatus => {
   const now = new Date().getTime();
   const updateTime = new Date(updatedAt).getTime();
@@ -46,40 +55,44 @@ const calculateHealthStatus = (updatedAt: string): HealthStatus => {
   }
 };
 
+// Create a better bus icon SVG similar to the reference image
+const createBusIcon = (color: string): string => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+      <!-- Outer colored ring -->
+      <circle cx="24" cy="24" r="22" fill="white" stroke="${color}" stroke-width="4"/>
+      <!-- Inner white circle -->
+      <circle cx="24" cy="24" r="16" fill="white"/>
+      <!-- Bus icon -->
+      <g transform="translate(24, 24)">
+        <path d="M-8,-6 L8,-6 L8,6 L-8,6 Z" fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="-7" y="-5" width="6" height="5" fill="white" rx="0.5"/>
+        <rect x="1" y="-5" width="6" height="5" fill="white" rx="0.5"/>
+        <rect x="-7" y="1" width="14" height="3" fill="white" rx="0.5"/>
+        <circle cx="-4" cy="7" r="1.5" fill="#333"/>
+        <circle cx="4" cy="7" r="1.5" fill="#333"/>
+        <line x1="-8" y1="-2" x2="8" y2="-2" stroke="white" stroke-width="1"/>
+      </g>
+    </svg>
+  `;
+  return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+};
+
 export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({ 
   routes, 
   height = '600px' 
 }) => {
-  const mapRef = useRef<L.Map | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [trackingData, setTrackingData] = useState<Map<string, RouteTrackingData>>(new Map());
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
-
-    // Initialize map with Bangalore coordinates as default
-    const map = L.map(mapContainerRef.current).setView([12.9716, 77.5946], 12);
-
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
-
-    mapRef.current = map;
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  });
 
   // Fetch tracking data for all routes
-  const fetchAllTracking = React.useCallback(async () => {
+  const fetchAllTracking = useCallback(async () => {
     console.log('[MultiRouteLiveMap] fetchAllTracking called. Routes:', routes?.length);
     
     if (!routes || routes.length === 0) {
@@ -95,6 +108,13 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
           console.log(`[MultiRouteLiveMap] Fetching tracking for route ${route.routeId}`);
           const data = await trackingService.fetchLiveTracking(route.routeId);
           console.log(`[MultiRouteLiveMap] Got data for ${route.routeId}:`, data);
+          
+          // Safety check: ensure data is valid
+          if (!data || !data.updated_at) {
+            console.error(`Invalid tracking data for route ${route.routeId}:`, data);
+            return;
+          }
+          
           const healthStatus = calculateHealthStatus(data.updated_at);
           console.log(`[MultiRouteLiveMap] Health status for ${route.routeId}:`, healthStatus);
           newTrackingData.set(route.routeId, { data, healthStatus });
@@ -106,9 +126,9 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
     );
 
     console.log('[MultiRouteLiveMap] All fetches complete. Total tracking data:', newTrackingData.size);
-
-    console.log('[MultiRouteLiveMap] Setting tracking data state');
-    setTrackingData(newTrackingData);
+    console.log('[MultiRouteLiveMap] Setting tracking data state with new Map instance');
+    // Create a new Map instance to ensure React detects the change
+    setTrackingData(new Map(newTrackingData));
   }, [routes]);
 
   // Initial fetch
@@ -143,95 +163,41 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
     };
   }, []);
 
-  // Update markers when tracking data changes
+  // Fit map bounds when tracking data changes
   useEffect(() => {
-    console.log('[MultiRouteLiveMap] Marker update effect triggered. Map:', !!mapRef.current, 'Tracking data size:', trackingData.size);
-    
-    if (!mapRef.current || trackingData.size === 0) {
-      console.log('[MultiRouteLiveMap] Skipping marker update - no map or no tracking data');
-      return;
-    }
-
-    console.log('[MultiRouteLiveMap] Creating markers for', trackingData.size, 'routes');
-
-    const map = mapRef.current;
-    const markers = markersRef.current;
-    const bounds: L.LatLngBoundsExpression = [];
-
-    // Clear existing markers
-    markers.forEach(marker => marker.remove());
-    markers.clear();
-
-    // Add markers for each route
-    trackingData.forEach((tracking, routeId) => {
-      const route = routes.find(r => r.routeId === routeId);
-      if (!route) {
-        console.log('[MultiRouteLiveMap] Route not found for', routeId);
-        return;
-      }
-
-      const position: L.LatLngExpression = [tracking.data.lat, tracking.data.lng];
-      console.log(`[MultiRouteLiveMap] Adding marker for ${route.routeName} at`, position);
-      bounds.push(position);
-
-      // Determine marker color based on health status
-      const healthColor = tracking.healthStatus === 'healthy' 
-        ? 'bg-green-600' 
-        : tracking.healthStatus === 'warning' 
-        ? 'bg-yellow-600' 
-        : 'bg-red-600';
-
-      // Create custom bus icon
-      const busIcon = L.divIcon({
-        className: 'custom-bus-marker',
-        html: `
-          <div class="flex flex-col items-center">
-            <div class="${healthColor} text-white rounded-full p-2 shadow-lg border-2 border-white">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 6v6"/>
-                <path d="M15 6v6"/>
-                <path d="M2 12h19.6"/>
-                <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/>
-                <circle cx="7" cy="18" r="2"/>
-                <path d="M9 18h5"/>
-                <circle cx="16" cy="18" r="2"/>
-              </svg>
-            </div>
-            <div class="bg-white px-2 py-1 rounded shadow-md text-xs font-semibold mt-1 whitespace-nowrap border border-gray-200">
-              ${route.vehicleNumber || route.routeName}
-            </div>
-          </div>
-        `,
-        iconSize: [60, 80],
-        iconAnchor: [30, 80],
+    if (map && trackingData.size > 0) {
+      console.log('[MultiRouteLiveMap] Fitting bounds for', trackingData.size, 'markers');
+      const bounds = new google.maps.LatLngBounds();
+      let markerCount = 0;
+      
+      trackingData.forEach((tracking) => {
+        const position = { lat: tracking.data.lat, lng: tracking.data.lng };
+        console.log('[MultiRouteLiveMap] Extending bounds with:', position);
+        bounds.extend(position);
+        markerCount++;
       });
-
-      const marker = L.marker(position, { icon: busIcon }).addTo(map);
-
-      // Add popup with route info
-      const popupContent = `
-        <div class="p-2">
-          <h3 class="font-semibold text-sm mb-1">${route.routeName}</h3>
-          ${route.driverName ? `<p class="text-xs text-gray-600 mb-1">Driver: ${route.driverName}</p>` : ''}
-          <p class="text-xs text-gray-600 mb-1">Vehicle: ${route.vehicleNumber || 'N/A'}</p>
-          <p class="text-xs text-gray-600 mb-1">Speed: ${tracking.data.speed || 0} km/h</p>
-          <p class="text-xs text-gray-600 mb-1">Trip Type: ${tracking.data.trip_type}</p>
-          <p class="text-xs text-gray-500">Last updated: ${new Date(tracking.data.updated_at).toLocaleTimeString()}</p>
-        </div>
-      `;
-      marker.bindPopup(popupContent);
-
-      markers.set(routeId, marker);
-    });
-
-    console.log('[MultiRouteLiveMap] Created', markers.size, 'markers. Bounds:', bounds);
-
-    // Fit map to show all markers
-    if (bounds.length > 0) {
-      console.log('[MultiRouteLiveMap] Fitting map to bounds');
-      map.fitBounds(bounds, { padding: [50, 50] });
+      
+      if (markerCount === 1) {
+        // If only one marker, center on it and set a reasonable zoom
+        const singlePosition = Array.from(trackingData.values())[0].data;
+        console.log('[MultiRouteLiveMap] Single marker - centering at:', singlePosition);
+        map.setCenter({ lat: singlePosition.lat, lng: singlePosition.lng });
+        map.setZoom(15);
+      } else {
+        // Multiple markers - fit bounds with padding
+        console.log('[MultiRouteLiveMap] Multiple markers - fitting bounds');
+        map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+      }
     }
-  }, [trackingData, routes]);
+  }, [map, trackingData]);
+
+  const onLoad = useCallback((map: google.maps.Map) => {
+    setMap(map);
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
 
   // Calculate overall health statistics
   const healthStats = useMemo(() => {
@@ -248,8 +214,36 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
     return { healthy, warning, stale };
   }, [trackingData]);
 
+  if (loadError) {
+    return (
+      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+        <p className="text-sm text-destructive">
+          Failed to load Google Maps. Please check your API key and internet connection.
+        </p>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center p-12 bg-muted/30 rounded-lg" style={{ height }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
+      {/* Debug Info */}
+      <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+        <div>Routes count: {routes.length}</div>
+        <div>Tracking data size: {trackingData.size}</div>
+        <div>Tracking data keys: {Array.from(trackingData.keys()).join(', ')}</div>
+      </div>
+
       {/* Status Bar */}
       {trackingData.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -278,12 +272,106 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
         </div>
       )}
 
-      {/* Map Container */}
-      <div 
-        ref={mapContainerRef} 
-        style={{ height, width: '100%' }} 
-        className="rounded-lg overflow-hidden border border-border"
-      />
+      {/* Google Map */}
+      <div className="rounded-lg overflow-hidden border border-border" style={{ height }}>
+        <GoogleMap
+          mapContainerStyle={{ ...mapContainerStyle, height }}
+          center={defaultCenter}
+          zoom={15}
+          onLoad={onLoad}
+          onUnmount={onUnmount}
+          options={mapOptions}
+        >
+          {(() => {
+            const entries = Array.from(trackingData.entries());
+            console.log('[MultiRouteLiveMap] Rendering markers. Entries count:', entries.length);
+            
+            return entries.map(([routeId, tracking]) => {
+              const route = routes.find(r => r.routeId === routeId);
+              console.log(`[MultiRouteLiveMap] Processing marker for ${routeId}. Route found:`, !!route);
+              
+              if (!route) {
+                console.log(`[MultiRouteLiveMap] Skipping ${routeId} - route not found`);
+                return null;
+              }
+
+              const position = { lat: tracking.data.lat, lng: tracking.data.lng };
+              const markerColor = tracking.healthStatus === 'healthy' 
+                ? '#22c55e' 
+                : tracking.healthStatus === 'warning' 
+                ? '#eab308' 
+                : '#ef4444';
+
+              console.log(`[MultiRouteLiveMap] Rendering marker for ${routeId} at`, position, 'color:', markerColor);
+
+              return (
+                <React.Fragment key={routeId}>
+                  <Marker
+                    position={position}
+                    onClick={() => {
+                      console.log(`[MultiRouteLiveMap] Marker clicked for ${routeId}`);
+                      setSelectedRoute(routeId);
+                    }}
+                    icon={{
+                      url: createBusIcon(markerColor),
+                      scaledSize: new google.maps.Size(48, 48),
+                      anchor: new google.maps.Point(24, 24),
+                    }}
+                  />
+                  {selectedRoute === routeId && (
+                    <InfoWindow
+                      position={position}
+                      onCloseClick={() => setSelectedRoute(null)}
+                    >
+                      <div className="p-3 min-w-[200px]">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Bus className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-base">{route.routeName}</h3>
+                        </div>
+                        <div className="space-y-1.5 text-sm">
+                          {route.driverName && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Driver:</span>
+                              <span className="font-medium">{route.driverName}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Vehicle:</span>
+                            <span className="font-medium">{route.vehicleNumber || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Speed:</span>
+                            <span className="font-medium">{tracking.data.speed || 0} km/h</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Trip Type:</span>
+                            <span className="font-medium">{tracking.data.trip_type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className={`font-medium ${
+                              tracking.healthStatus === 'healthy' ? 'text-green-600' :
+                              tracking.healthStatus === 'warning' ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {tracking.healthStatus.charAt(0).toUpperCase() + tracking.healthStatus.slice(1)}
+                            </span>
+                          </div>
+                          <div className="pt-2 border-t mt-2">
+                            <span className="text-xs text-gray-500">
+                              Last updated: {new Date(tracking.data.updated_at).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </InfoWindow>
+                  )}
+                </React.Fragment>
+              );
+            });
+          })()}
+        </GoogleMap>
+      </div>
 
       {routes.length === 0 && (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
