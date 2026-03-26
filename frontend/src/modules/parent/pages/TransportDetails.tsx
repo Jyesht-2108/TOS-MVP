@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { parentService } from '@/services/parent.service';
 import { ChildTransportInfo } from '@/types';
+import { ChildLiveMap } from '../components/ChildLiveMap';
 
 const LoadingSkeleton: React.FC = () => {
   return (
@@ -336,6 +337,31 @@ export const TransportDetails: React.FC = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Live Bus Location Map */}
+          {child.routeId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Live Bus Location
+                </CardTitle>
+                <CardDescription>
+                  Track your child's bus in real-time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChildLiveMap
+                  routeId={child.routeId}
+                  routeName={child.routeName}
+                  vehicleNumber={child.vehicleNumber}
+                  driverName={child.driverName}
+                  childName={child.name}
+                  height="450px"
+                />
+              </CardContent>
+            </Card>
+          )}
         </>
       ) : (
         <Card>

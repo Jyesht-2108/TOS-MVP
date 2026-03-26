@@ -41,12 +41,15 @@ class TrackingService {
     }
 
     try {
+      console.log(`[TrackingService] Fetching tracking for route: ${routeId}`);
       const response = await api.get<LiveTrackingResponse>('/tracking/live', {
         params: { route_id: routeId }
       });
+      console.log(`[TrackingService] Response for ${routeId}:`, response.data);
+      // API interceptor already unwraps the response, so just return response.data
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch live tracking:', error);
+      console.error(`[TrackingService] Failed to fetch live tracking for ${routeId}:`, error);
       throw error;
     }
   }

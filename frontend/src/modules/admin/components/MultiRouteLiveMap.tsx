@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { trackingService, LiveTrackingResponse } from '@/services/tracking.service';
@@ -55,7 +55,6 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const [trackingData, setTrackingData] = useState<Map<string, RouteTrackingData>>(new Map());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(true);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -80,34 +79,44 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
   }, []);
 
   // Fetch tracking data for all routes
-  const fetchAllTracking = async () => {
-    if (!routes || routes.length === 0) return;
+  const fetchAllTracking = React.useCallback(async () => {
+    console.log('[MultiRouteLiveMap] fetchAllTracking called. Routes:', routes?.length);
+    
+    if (!routes || routes.length === 0) {
+      console.log('[MultiRouteLiveMap] No routes to fetch');
+      return;
+    }
 
     const newTrackingData = new Map<string, RouteTrackingData>();
 
     await Promise.all(
       routes.map(async (route) => {
         try {
+          console.log(`[MultiRouteLiveMap] Fetching tracking for route ${route.routeId}`);
           const data = await trackingService.fetchLiveTracking(route.routeId);
+          console.log(`[MultiRouteLiveMap] Got data for ${route.routeId}:`, data);
           const healthStatus = calculateHealthStatus(data.updated_at);
+          console.log(`[MultiRouteLiveMap] Health status for ${route.routeId}:`, healthStatus);
           newTrackingData.set(route.routeId, { data, healthStatus });
+          console.log(`[MultiRouteLiveMap] Added to map. Map size now:`, newTrackingData.size);
         } catch (error) {
           console.error(`Failed to fetch tracking for route ${route.routeId}:`, error);
         }
       })
     );
 
-    if (isMountedRef.current) {
-      setTrackingData(newTrackingData);
-    }
-  };
+    console.log('[MultiRouteLiveMap] All fetches complete. Total tracking data:', newTrackingData.size);
+
+    console.log('[MultiRouteLiveMap] Setting tracking data state');
+    setTrackingData(newTrackingData);
+  }, [routes]);
 
   // Initial fetch
   useEffect(() => {
     if (routes && routes.length > 0) {
       fetchAllTracking();
     }
-  }, [routes]);
+  }, [routes, fetchAllTracking]);
 
   // Set up polling interval
   useEffect(() => {
@@ -123,12 +132,11 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
         intervalRef.current = null;
       }
     };
-  }, [routes]);
+  }, [routes, fetchAllTracking]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -137,7 +145,14 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
 
   // Update markers when tracking data changes
   useEffect(() => {
-    if (!mapRef.current || trackingData.size === 0) return;
+    console.log('[MultiRouteLiveMap] Marker update effect triggered. Map:', !!mapRef.current, 'Tracking data size:', trackingData.size);
+    
+    if (!mapRef.current || trackingData.size === 0) {
+      console.log('[MultiRouteLiveMap] Skipping marker update - no map or no tracking data');
+      return;
+    }
+
+    console.log('[MultiRouteLiveMap] Creating markers for', trackingData.size, 'routes');
 
     const map = mapRef.current;
     const markers = markersRef.current;
@@ -150,9 +165,13 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
     // Add markers for each route
     trackingData.forEach((tracking, routeId) => {
       const route = routes.find(r => r.routeId === routeId);
-      if (!route) return;
+      if (!route) {
+        console.log('[MultiRouteLiveMap] Route not found for', routeId);
+        return;
+      }
 
       const position: L.LatLngExpression = [tracking.data.lat, tracking.data.lng];
+      console.log(`[MultiRouteLiveMap] Adding marker for ${route.routeName} at`, position);
       bounds.push(position);
 
       // Determine marker color based on health status
@@ -205,14 +224,17 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
       markers.set(routeId, marker);
     });
 
+    console.log('[MultiRouteLiveMap] Created', markers.size, 'markers. Bounds:', bounds);
+
     // Fit map to show all markers
     if (bounds.length > 0) {
+      console.log('[MultiRouteLiveMap] Fitting map to bounds');
       map.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [trackingData, routes]);
 
   // Calculate overall health statistics
-  const healthStats = React.useMemo(() => {
+  const healthStats = useMemo(() => {
     let healthy = 0;
     let warning = 0;
     let stale = 0;
