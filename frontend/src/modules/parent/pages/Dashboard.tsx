@@ -19,10 +19,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedPage } from '@/components/AnimatedPage';
-import { LiveMap } from '../components/LiveMap';
+import { ChildLiveMap } from '../components/ChildLiveMap';
 import { parentService } from '@/services/parent.service';
-import { LiveRouteTracking, ParentDashboardStats } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
+import { ParentDashboardStats } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 
 interface StatCardProps {
@@ -73,7 +72,6 @@ const StatCardSkeleton: React.FC = () => {
 
 export const ParentDashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Fetch dashboard stats
   const { 
@@ -85,18 +83,16 @@ export const ParentDashboard: React.FC = () => {
     refetchInterval: 30000,
   });
 
-  // Fetch live tracking data
+  // Fetch active live trip
   const { 
-    data: tracking, 
-    isLoading: trackingLoading, 
-    error: trackingError,
-    refetch: refetchTracking,
+    data: liveTrip, 
+    isLoading: liveTripLoading,
+    refetch: refetchLiveTrip,
     isRefetching
-  } = useQuery<LiveRouteTracking[]>({
-    queryKey: ['liveTracking'],
-    queryFn: () => parentService.fetchLiveTracking(),
-    refetchInterval: autoRefresh ? 10000 : false,
-    refetchIntervalInBackground: false,
+  } = useQuery({
+    queryKey: ['parentLiveTrip'],
+    queryFn: () => parentService.fetchActiveLiveTrip(),
+    refetchInterval: 30000, // Check for new trips every 30 seconds
   });
 
   // Fetch children transport info
@@ -114,54 +110,21 @@ export const ParentDashboard: React.FC = () => {
     data: childrenAttendance,
     isLoading: attendanceLoading,
   } = useQuery({
-    queryKey: ['childrenAttendance'],
+    queryKey: ['childrenAttendance', children?.map(c => c.id).join(',')],
     queryFn: async () => {
       if (!children) return [];
-      const { adminService } = await import('@/services/admin.service');
       const attendancePromises = children.map(child => 
-        adminService.fetchStudentAttendance(child.id).catch(() => null)
+        parentService.fetchChildAttendance(child.id).catch(() => null)
       );
       return Promise.all(attendancePromises);
     },
     enabled: !!children && children.length > 0,
+    refetchInterval: 30000, // Refresh attendance every 30 seconds
   });
 
   const handleManualRefresh = () => {
-    refetchTracking();
+    refetchLiveTrip();
   };
-
-  const getTripStatusBadge = (status: LiveRouteTracking['tripStatus']) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge variant="default" className="bg-green-500">Active</Badge>;
-      case 'INACTIVE':
-        return <Badge variant="secondary">Inactive</Badge>;
-      case 'COMPLETED':
-        return <Badge variant="secondary">Completed</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const formatLastUpdated = (timestamp: string) => {
-    try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch {
-      return 'Unknown';
-    }
-  };
-
-  const formatETA = (timestamp?: string) => {
-    if (!timestamp) return 'N/A';
-    try {
-      const eta = new Date(timestamp);
-      return eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return 'N/A';
-    }
-  };
-
-  const activeTracking = tracking?.filter(t => t.tripStatus === 'ACTIVE') || [];
 
   return (
     <AnimatedPage>
@@ -191,15 +154,6 @@ export const ParentDashboard: React.FC = () => {
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
               Refresh
-            </Button>
-            <Button
-              variant={autoRefresh ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className="touch-target"
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              {autoRefresh ? 'Auto On' : 'Auto Off'}
             </Button>
           </div>
         </motion.div>
@@ -360,7 +314,7 @@ export const ParentDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Live Map */}
+        {/* Live Bus Tracking */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -368,164 +322,57 @@ export const ParentDashboard: React.FC = () => {
               Live Bus Tracking
             </CardTitle>
             <CardDescription>
-              Real-time location of buses on your children's routes
+              Real-time location of your child's bus
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {trackingLoading ? (
+            {liveTripLoading ? (
               <Skeleton className="h-[500px] w-full rounded-lg" />
-            ) : trackingError ? (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Unable to Load Tracking</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Failed to load live tracking data. Please try again.
-                </p>
-                <Button onClick={handleManualRefresh}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-              </div>
-            ) : !tracking || tracking.length === 0 ? (
-              <div className="text-center py-12 bg-muted rounded-lg">
+            ) : !liveTrip ? (
+              <div className="text-center py-12 bg-muted/30 rounded-lg">
                 <Bus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Active Routes</h3>
+                <h3 className="text-lg font-semibold mb-2">No Active Trips</h3>
                 <p className="text-sm text-muted-foreground">
-                  Your children are not assigned to any active routes at the moment.
+                  No active trips right now. We will notify you when the bus starts.
                 </p>
               </div>
-            ) : activeTracking.length > 0 ? (
-              <LiveMap tracking={activeTracking} height="500px" />
             ) : (
-              <div className="text-center py-12 bg-muted rounded-lg">
-                <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Active Buses</h3>
-                <p className="text-sm text-muted-foreground">
-                  There are no buses currently active on your children's routes.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Transport Schedule Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Transport Schedule
-            </CardTitle>
-            <CardDescription>
-              Pickup and drop-off times for your children's routes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {trackingLoading ? (
               <div className="space-y-4">
-                {[...Array(2)].map((_, i) => (
-                  <Skeleton key={i} className="h-32 w-full" />
-                ))}
-              </div>
-            ) : !tracking || tracking.length === 0 ? (
-              <div className="text-center py-8">
-                <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  No schedule information available.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {tracking.map((route) => (
-                  <motion.div
-                    key={route.routeId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Card className="border-2">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-base">{route.routeName}</CardTitle>
-                            <CardDescription className="mt-1 text-xs">
-                              {route.vehicleNumber || 'Vehicle info not available'}
-                            </CardDescription>
-                          </div>
-                          {getTripStatusBadge(route.tripStatus)}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {/* Pickup Time */}
-                        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                              <MapPin className="h-4 w-4 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Pickup Time</p>
-                              <p className="text-sm font-semibold">7:30 AM</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Drop-off Time */}
-                        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Drop-off Time</p>
-                              <p className="text-sm font-semibold">3:30 PM</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Average Travel Time */}
-                        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Clock className="h-4 w-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Avg. Travel Time</p>
-                              <p className="text-sm font-semibold">25-30 minutes</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Live Status */}
-                        {route.currentLocation && route.tripStatus === 'ACTIVE' && (
-                          <div className="pt-3 border-t space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Current Speed</span>
-                              <span className="font-medium">
-                                {route.currentLocation.speed || 0} km/h
-                              </span>
-                            </div>
-                            {route.estimatedArrival && (
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  Est. Arrival
-                                </span>
-                                <span className="font-medium text-green-600 dark:text-green-400">
-                                  {formatETA(route.estimatedArrival)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between text-xs pt-1">
-                              <span className="text-muted-foreground">Last Updated</span>
-                              <span className="text-muted-foreground">
-                                {formatLastUpdated(route.lastUpdated)}
-                              </span>
-                            </div>
-                          </div>
+                {/* Trip Info Banner */}
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="bg-green-500">
+                          <Navigation className="mr-1 h-3 w-3" />
+                          Active Trip
+                        </Badge>
+                        <Badge variant="outline">{liveTrip.tripType}</Badge>
+                      </div>
+                      <div>
+                        <p className="font-semibold">{liveTrip.routeName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {liveTrip.childName} • {liveTrip.vehicleNumber || 'Vehicle info not available'}
+                        </p>
+                        {liveTrip.driverName && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Driver: {liveTrip.driverName}
+                          </p>
                         )}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Map with Polling */}
+                <ChildLiveMap
+                  routeId={liveTrip.routeId}
+                  routeName={liveTrip.routeName}
+                  vehicleNumber={liveTrip.vehicleNumber}
+                  driverName={liveTrip.driverName}
+                  childName={liveTrip.childName}
+                  height="500px"
+                />
               </div>
             )}
           </CardContent>
@@ -541,7 +388,7 @@ export const ParentDashboard: React.FC = () => {
                   About Live Tracking
                 </p>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  The map shows real-time bus locations when trips are active. 
+                  The map shows real-time bus location when your child's trip is active. 
                   Tracking updates automatically every 10 seconds. 
                   Times shown are estimates and may vary based on traffic conditions.
                 </p>

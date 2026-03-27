@@ -55,15 +55,12 @@ const calculateHealthStatus = (updatedAt: string): HealthStatus => {
   }
 };
 
-// Create a better bus icon SVG similar to the reference image
+// Create a better bus icon SVG
 const createBusIcon = (color: string): string => {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-      <!-- Outer colored ring -->
       <circle cx="24" cy="24" r="22" fill="white" stroke="${color}" stroke-width="4"/>
-      <!-- Inner white circle -->
       <circle cx="24" cy="24" r="16" fill="white"/>
-      <!-- Bus icon -->
       <g transform="translate(24, 24)">
         <path d="M-8,-6 L8,-6 L8,6 L-8,6 Z" fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
         <rect x="-7" y="-5" width="6" height="5" fill="white" rx="0.5"/>
@@ -237,13 +234,6 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Debug Info */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-        <div>Routes count: {routes.length}</div>
-        <div>Tracking data size: {trackingData.size}</div>
-        <div>Tracking data keys: {Array.from(trackingData.keys()).join(', ')}</div>
-      </div>
-
       {/* Status Bar */}
       {trackingData.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -315,7 +305,7 @@ export const MultiRouteLiveMap: React.FC<MultiRouteLiveMapProps> = ({
                     icon={{
                       url: createBusIcon(markerColor),
                       scaledSize: new google.maps.Size(48, 48),
-                      anchor: new google.maps.Point(24, 24),
+                      anchor: new google.maps.Point(24, 48),
                     }}
                   />
                   {selectedRoute === routeId && (

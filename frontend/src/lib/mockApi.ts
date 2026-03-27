@@ -446,6 +446,81 @@ export const setupMockApi = (api: AxiosInstance) => {
         });
       }
 
+      // Mock GET /parent/live-trip
+      if (method === 'get' && url === '/parent/live-trip') {
+        const { getMockChildrenTransport, getMockActiveTrips } = await import('./mockData');
+        
+        // Get current user from localStorage
+        const userStr = localStorage.getItem('user');
+        const currentUser = userStr ? JSON.parse(userStr) : null;
+        const parentUserId = currentUser?.id;
+        
+        // Get parent's children
+        const children = getMockChildrenTransport(parentUserId);
+        if (children.length === 0) {
+          return Promise.reject({
+            __isMockResponse: true,
+            config,
+            response: {
+              data: null,
+              status: 404,
+              statusText: 'Not Found',
+              headers: {},
+              config,
+            },
+          });
+        }
+        
+        // Get all active trips
+        const activeTrips = getMockActiveTrips();
+        
+        // Find if any child's route has an active trip
+        for (const child of children) {
+          if (!child.routeId) continue;
+          
+          const activeTrip = activeTrips.find(trip => 
+            trip.routeId === child.routeId && trip.status === 'ACTIVE'
+          );
+          
+          if (activeTrip) {
+            const liveTrip = {
+              tripId: activeTrip.tripId,
+              routeId: activeTrip.routeId,
+              routeName: activeTrip.routeName,
+              vehicleNumber: activeTrip.vehicleNumber,
+              driverName: activeTrip.driverName,
+              childName: child.name,
+              tripType: activeTrip.tripType,
+            };
+            
+            return Promise.reject({
+              __isMockResponse: true,
+              config,
+              response: {
+                data: liveTrip,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config,
+              },
+            });
+          }
+        }
+        
+        // No active trip found
+        return Promise.reject({
+          __isMockResponse: true,
+          config,
+          response: {
+            data: null,
+            status: 404,
+            statusText: 'Not Found',
+            headers: {},
+            config,
+          },
+        });
+      }
+
       // Mock GET /parent/dashboard/stats
       if (method === 'get' && url === '/parent/dashboard/stats') {
         const parentStats = {

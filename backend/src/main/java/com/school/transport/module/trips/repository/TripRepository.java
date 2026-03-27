@@ -29,6 +29,9 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     @Query("SELECT t FROM Trip t WHERE t.routeId = :routeId AND t.status = :status")
     List<Trip> findByRouteIdAndStatus(UUID routeId, Trip.TripStatus status);
     
+    @Query(value = "SELECT * FROM trips t WHERE t.route_id = :routeId AND t.status = 'ACTIVE'", nativeQuery = true)
+    Optional<Trip> findActiveByRouteId(UUID routeId);
+    
     @Query(value = "SELECT * FROM trips t WHERE t.route_id = :routeId AND t.trip_type::text = :tripType AND t.status = 'ACTIVE'", nativeQuery = true)
     Optional<Trip> findActiveTripByRouteIdAndTripType(UUID routeId, String tripType);
     

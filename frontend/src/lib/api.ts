@@ -40,13 +40,26 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach JWT token and user ID
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token');
+    const userStr = localStorage.getItem('user');
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Add user ID header for MVP (since authentication is disabled)
+    if (userStr && config.headers) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id) {
+          config.headers['X-User-Id'] = user.id;
+        }
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
     }
     
     return config;

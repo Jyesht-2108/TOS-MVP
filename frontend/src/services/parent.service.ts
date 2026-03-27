@@ -140,6 +140,112 @@ class ParentService {
   }
 
   /**
+   * Fetch active trip for parent's children
+   * Returns trip details if any child has an active trip, null otherwise
+   * @returns Promise with active trip data or null
+   */
+  async fetchActiveLiveTrip(): Promise<{
+    tripId: string;
+    routeId: string;
+    routeName: string;
+    vehicleNumber?: string;
+    driverName?: string;
+    childName: string;
+    tripType: 'PICKUP' | 'DROP';
+  } | null> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { getMockChildrenTransport, getMockActiveTrips } = await import('@/lib/mockData');
+      
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const parentUserId = currentUser?.id;
+      
+      // Get parent's children
+      const children = getMockChildrenTransport(parentUserId);
+      if (children.length === 0) return null;
+      
+      // Get all active trips
+      const activeTrips = getMockActiveTrips();
+      
+      // Find if any child's route has an active trip
+      for (const child of children) {
+        if (!child.routeId) continue;
+        
+        const activeTrip = activeTrips.find(trip => 
+          trip.routeId === child.routeId && trip.status === 'ACTIVE'
+        );
+        
+        if (activeTrip) {
+          return {
+            tripId: activeTrip.tripId,
+            routeId: activeTrip.routeId,
+            routeName: activeTrip.routeName,
+            vehicleNumber: activeTrip.vehicleNumber,
+            driverName: activeTrip.driverName,
+            childName: child.name,
+            tripType: activeTrip.tripType,
+          };
+        }
+      }
+      
+      return null;
+    }
+
+    try {
+      const response = await api.get('/parent/live-trip');
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      console.error('Failed to fetch active live trip:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch child attendance summary
+   * @param childId - The child ID
+   * @returns Promise with attendance summary
+   */
+  async fetchChildAttendance(childId: string): Promise<{
+    studentId: string;
+    totalTrips: number;
+    presentCount: number;
+    absentCount: number;
+    pendingCount: number;
+    attendancePercentage: number;
+    todayStatus?: string;
+  }> {
+    if (USE_MOCK) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Return mock attendance data
+      return {
+        studentId: childId,
+        totalTrips: 22,
+        presentCount: 20,
+        absentCount: 2,
+        pendingCount: 0,
+        attendancePercentage: 90.9,
+        todayStatus: 'PRESENT',
+      };
+    }
+
+    try {
+      const response = await api.get(`/parent/children/${childId}/attendance`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch child attendance:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch parent dashboard statistics
    * @returns Promise with dashboard stats
    */

@@ -32,6 +32,21 @@ export const useLiveTracking = ({
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  
+  // Reset mounted flag on mount
+  useEffect(() => {
+    console.log('[useLiveTracking] Component mounted, setting isMountedRef to true');
+    isMountedRef.current = true;
+    
+    return () => {
+      console.log('[useLiveTracking] Component unmounting, setting isMountedRef to false');
+      isMountedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   const calculateHealthStatus = useCallback((updatedAt: string): HealthStatus => {
     const now = new Date().getTime();
@@ -48,16 +63,25 @@ export const useLiveTracking = ({
   }, []);
 
   const fetchTracking = useCallback(async () => {
-    if (!routeId || !enabled) return;
+    if (!routeId || !enabled) {
+      console.log('[useLiveTracking] Skipping fetch - routeId:', routeId, 'enabled:', enabled);
+      return;
+    }
 
     try {
+      console.log('[useLiveTracking] Starting fetch for route:', routeId);
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
       const data = await trackingService.fetchLiveTracking(routeId);
+      console.log('[useLiveTracking] Fetch successful, data:', data);
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        console.log('[useLiveTracking] Component unmounted, skipping state update');
+        return;
+      }
 
       const healthStatus = calculateHealthStatus(data.updated_at);
+      console.log('[useLiveTracking] Setting state with data:', data, 'healthStatus:', healthStatus);
       
       setState({
         data,
@@ -66,7 +90,10 @@ export const useLiveTracking = ({
         isLoading: false,
         error: null,
       });
+      
+      console.log('[useLiveTracking] State updated successfully');
     } catch (error) {
+      console.error('[useLiveTracking] Fetch failed:', error);
       if (!isMountedRef.current) return;
       
       setState(prev => ({
@@ -101,16 +128,6 @@ export const useLiveTracking = ({
       }
     };
   }, [routeId, enabled, pollingInterval, fetchTracking]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
 
   // Update health status periodically based on existing data
   useEffect(() => {

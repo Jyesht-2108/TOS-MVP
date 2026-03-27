@@ -1,18 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect } from 'react';
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { useLiveTracking, HealthStatus } from '@/hooks/useLiveTracking';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, AlertCircle, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-
-// Fix for default marker icons in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 interface ChildLiveMapProps {
   routeId: string;
@@ -22,6 +13,44 @@ interface ChildLiveMapProps {
   childName?: string;
   height?: string;
 }
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px',
+};
+
+const defaultCenter = {
+  lat: 12.9716,
+  lng: 77.5946,
+};
+
+const mapOptions: google.maps.MapOptions = {
+  disableDefaultUI: false,
+  zoomControl: true,
+  mapTypeControl: false,
+  streetViewControl: false,
+  fullscreenControl: true,
+};
+
+// Create a proper bus icon SVG (same as admin map)
+const createBusIcon = (color: string): string => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="22" fill="white" stroke="${color}" stroke-width="4"/>
+      <circle cx="24" cy="24" r="16" fill="white"/>
+      <g transform="translate(24, 24)">
+        <path d="M-8,-6 L8,-6 L8,6 L-8,6 Z" fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="-7" y="-5" width="6" height="5" fill="white" rx="0.5"/>
+        <rect x="1" y="-5" width="6" height="5" fill="white" rx="0.5"/>
+        <rect x="-7" y="1" width="14" height="3" fill="white" rx="0.5"/>
+        <circle cx="-4" cy="7" r="1.5" fill="#333"/>
+        <circle cx="4" cy="7" r="1.5" fill="#333"/>
+        <line x1="-8" y1="-2" x2="8" y2="-2" stroke="white" stroke-width="1"/>
+      </g>
+    </svg>
+  `;
+  return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+};
 
 const getHealthBadge = (status: HealthStatus) => {
   switch (status) {
@@ -57,99 +86,91 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
   childName,
   height = '400px' 
 }) => {
-  const mapRef = useRef<L.Map | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  });
 
   // Use the live tracking hook with 10-second polling
-  const { data, healthStatus, lastUpdated, isLoading, error } = useLiveTracking({
+  const { data, healthStatus, isLoading, error } = useLiveTracking({
     routeId,
     pollingInterval: 10000,
     enabled: true,
   });
 
+  // Log tracking data for debugging
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    console.log('[ChildLiveMap] Tracking data updated:', { data, healthStatus, error });
+  }, [data, healthStatus, error]);
 
-    // Initialize map with Bangalore coordinates as default
-    const map = L.map(mapContainerRef.current).setView([12.9716, 77.5946], 12);
-
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
-
-    mapRef.current = map;
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
+  // Center map on marker when data changes
+  useEffect(() => {
+    if (map && data) {
+      const position = { lat: data.lat, lng: data.lng };
+      map.panTo(position);
+      if (map.getZoom()! < 14) {
+        map.setZoom(14);
       }
-    };
+    }
+  }, [map, data]);
+
+  const onLoad = React.useCallback((map: google.maps.Map) => {
+    setMap(map);
   }, []);
 
-  // Update marker position when data changes
-  useEffect(() => {
-    if (!mapRef.current || !data) return;
+  const onUnmount = React.useCallback(() => {
+    setMap(null);
+  }, []);
 
-    const map = mapRef.current;
-    const position: L.LatLngExpression = [data.lat, data.lng];
-
-    // Create custom bus icon
-    const busIcon = L.divIcon({
-      className: 'custom-bus-marker',
-      html: `
-        <div class="flex flex-col items-center">
-          <div class="bg-primary text-primary-foreground rounded-full p-2 shadow-lg border-2 border-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 6v6"/>
-              <path d="M15 6v6"/>
-              <path d="M2 12h19.6"/>
-              <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/>
-              <circle cx="7" cy="18" r="2"/>
-              <path d="M9 18h5"/>
-              <circle cx="16" cy="18" r="2"/>
-            </svg>
-          </div>
-          <div class="bg-white px-2 py-1 rounded shadow-md text-xs font-semibold mt-1 whitespace-nowrap border border-gray-200">
-            ${vehicleNumber || routeName || 'Bus'}
-          </div>
-        </div>
-      `,
-      iconSize: [60, 80],
-      iconAnchor: [30, 80],
-    });
-
-    if (markerRef.current) {
-      // Update existing marker position smoothly
-      markerRef.current.setLatLng(position);
-      markerRef.current.setIcon(busIcon);
-    } else {
-      // Create new marker
-      markerRef.current = L.marker(position, { icon: busIcon }).addTo(map);
-    }
-
-    // Add popup with route info
-    const popupContent = `
-      <div class="p-2">
-        <h3 class="font-semibold text-sm mb-1">${routeName || 'Route'}</h3>
-        ${childName ? `<p class="text-xs text-gray-600 mb-1">Child: ${childName}</p>` : ''}
-        ${driverName ? `<p class="text-xs text-gray-600 mb-1">Driver: ${driverName}</p>` : ''}
-        <p class="text-xs text-gray-600 mb-1">Vehicle: ${vehicleNumber || 'N/A'}</p>
-        <p class="text-xs text-gray-600 mb-1">Speed: ${data.speed || 0} km/h</p>
-        <p class="text-xs text-gray-500">Last updated: ${new Date(data.updated_at).toLocaleTimeString()}</p>
+  if (loadError) {
+    return (
+      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+        <p className="text-sm text-destructive">
+          Failed to load Google Maps. Please check your API key and internet connection.
+        </p>
       </div>
-    `;
-    markerRef.current.bindPopup(popupContent);
+    );
+  }
 
-    // Center map on marker
-    map.setView(position, 14);
-  }, [data, routeName, vehicleNumber, driverName, childName]);
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center p-12 bg-muted/30 rounded-lg" style={{ height }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const position = data ? { lat: data.lat, lng: data.lng } : defaultCenter;
+  
+  // Get marker color based on health status
+  const markerColor = healthStatus === 'healthy' 
+    ? '#22c55e' 
+    : healthStatus === 'warning' 
+    ? '#eab308' 
+    : '#6b7280';
 
   return (
     <div className="space-y-3">
+      {/* Debug Info */}
+      <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+        <div>Route ID: {routeId}</div>
+        <div>Has Data: {data ? 'YES' : 'NO'}</div>
+        {data && (
+          <>
+            <div>Position: {data.lat.toFixed(6)}, {data.lng.toFixed(6)}</div>
+            <div>Updated: {new Date(data.updated_at).toLocaleString()}</div>
+          </>
+        )}
+        <div>Health Status: {healthStatus}</div>
+        <div>Is Loading: {isLoading ? 'YES' : 'NO'}</div>
+        <div>Error: {error ? error.message : 'NONE'}</div>
+      </div>
+
       {/* Status Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-3">
@@ -201,12 +222,58 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
         </div>
       )}
 
-      {/* Map Container */}
-      <div 
-        ref={mapContainerRef} 
-        style={{ height, width: '100%' }} 
-        className="rounded-lg overflow-hidden border border-border"
-      />
+      {/* Google Map */}
+      <div className="rounded-lg overflow-hidden border border-border" style={{ height }}>
+        <GoogleMap
+          mapContainerStyle={{ ...mapContainerStyle, height }}
+          center={position}
+          zoom={14}
+          onLoad={onLoad}
+          onUnmount={onUnmount}
+          options={mapOptions}
+        >
+          {(() => {
+            console.log('[ChildLiveMap] Rendering map content. Data:', data);
+            if (!data) {
+              console.log('[ChildLiveMap] No data - marker will not render');
+              return null;
+            }
+            
+            console.log('[ChildLiveMap] Rendering marker at:', position, 'color:', markerColor);
+            return (
+              <>
+                <Marker
+                  position={position}
+                  onClick={() => {
+                    console.log('[ChildLiveMap] Marker clicked at:', position);
+                    setShowInfo(true);
+                  }}
+                  icon={{
+                    url: createBusIcon(markerColor),
+                    scaledSize: new google.maps.Size(48, 48),
+                    anchor: new google.maps.Point(24, 24),
+                  }}
+                />
+              {showInfo && (
+                <InfoWindow
+                  position={position}
+                  onCloseClick={() => setShowInfo(false)}
+                >
+                  <div className="p-2">
+                    <h3 className="font-semibold text-sm mb-1">{routeName || 'Route'}</h3>
+                    {childName && <p className="text-xs text-gray-600 mb-1">Child: {childName}</p>}
+                    {driverName && <p className="text-xs text-gray-600 mb-1">Driver: {driverName}</p>}
+                    <p className="text-xs text-gray-600 mb-1">Vehicle: {vehicleNumber || 'N/A'}</p>
+                    <p className="text-xs text-gray-600 mb-1">Speed: {data.speed || 0} km/h</p>
+                    <p className="text-xs text-gray-500">Last updated: {new Date(data.updated_at).toLocaleTimeString()}</p>
+                  </div>
+                </InfoWindow>
+              )}
+            </>
+          );
+          })()}
+        </GoogleMap>
+      </div>
 
       {/* Additional Info */}
       {data && (
