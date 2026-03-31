@@ -93,6 +93,10 @@ export const ParentDashboard: React.FC = () => {
     queryKey: ['parentLiveTrip'],
     queryFn: () => parentService.fetchActiveLiveTrip(),
     refetchInterval: 30000, // Check for new trips every 30 seconds
+    retry: false, // Don't retry on 404
+    meta: {
+      errorMessage: null, // Suppress error toast for this query
+    },
   });
 
   // Fetch children transport info

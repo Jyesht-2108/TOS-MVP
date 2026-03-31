@@ -198,9 +198,11 @@ class ParentService {
       const response = await api.get('/parent/live-trip');
       return response.data;
     } catch (error: any) {
+      // 404 is expected when no active trips - return null silently
       if (error.response?.status === 404) {
         return null;
       }
+      // Only log unexpected errors
       console.error('Failed to fetch active live trip:', error);
       throw error;
     }
