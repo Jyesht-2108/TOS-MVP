@@ -52,7 +52,7 @@ dist-ssr
 
 .DS_Store
 *.suo
-*.ntvs*
+*.ntvs*jbl
 *.njsproj
 *.sln
 *.sw?

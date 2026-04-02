@@ -91,12 +91,16 @@ export const ParentDashboard: React.FC = () => {
     isRefetching
   } = useQuery({
     queryKey: ['parentLiveTrip'],
-    queryFn: () => parentService.fetchActiveLiveTrip(),
-    refetchInterval: 30000, // Check for new trips every 30 seconds
-    retry: false, // Don't retry on 404
-    meta: {
-      errorMessage: null, // Suppress error toast for this query
+    queryFn: async () => {
+      try {
+        return await parentService.fetchActiveLiveTrip();
+      } catch (error) {
+        // Silently return null on any error (404 is expected when no trips)
+        return null;
+      }
     },
+    refetchInterval: 30000, // Check for new trips every 30 seconds
+    retry: false, // Don't retry on errors
   });
 
   // Fetch children transport info

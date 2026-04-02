@@ -100,11 +100,6 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
     enabled: true,
   });
 
-  // Log tracking data for debugging
-  useEffect(() => {
-    console.log('[ChildLiveMap] Tracking data updated:', { data, healthStatus, error });
-  }, [data, healthStatus, error]);
-
   // Center map on marker when data changes
   useEffect(() => {
     if (map && data) {
@@ -156,21 +151,6 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Debug Info */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-        <div>Route ID: {routeId}</div>
-        <div>Has Data: {data ? 'YES' : 'NO'}</div>
-        {data && (
-          <>
-            <div>Position: {data.lat.toFixed(6)}, {data.lng.toFixed(6)}</div>
-            <div>Updated: {new Date(data.updated_at).toLocaleString()}</div>
-          </>
-        )}
-        <div>Health Status: {healthStatus}</div>
-        <div>Is Loading: {isLoading ? 'YES' : 'NO'}</div>
-        <div>Error: {error ? error.message : 'NONE'}</div>
-      </div>
-
       {/* Status Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-3">
@@ -232,28 +212,17 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
           onUnmount={onUnmount}
           options={mapOptions}
         >
-          {(() => {
-            console.log('[ChildLiveMap] Rendering map content. Data:', data);
-            if (!data) {
-              console.log('[ChildLiveMap] No data - marker will not render');
-              return null;
-            }
-            
-            console.log('[ChildLiveMap] Rendering marker at:', position, 'color:', markerColor);
-            return (
-              <>
-                <Marker
-                  position={position}
-                  onClick={() => {
-                    console.log('[ChildLiveMap] Marker clicked at:', position);
-                    setShowInfo(true);
-                  }}
-                  icon={{
-                    url: createBusIcon(markerColor),
-                    scaledSize: new google.maps.Size(48, 48),
-                    anchor: new google.maps.Point(24, 24),
-                  }}
-                />
+          {data && (
+            <>
+              <Marker
+                position={position}
+                onClick={() => setShowInfo(true)}
+                icon={{
+                  url: createBusIcon(markerColor),
+                  scaledSize: new google.maps.Size(48, 48),
+                  anchor: new google.maps.Point(24, 24),
+                }}
+              />
               {showInfo && (
                 <InfoWindow
                   position={position}
@@ -270,8 +239,7 @@ export const ChildLiveMap: React.FC<ChildLiveMapProps> = ({
                 </InfoWindow>
               )}
             </>
-          );
-          })()}
+          )}
         </GoogleMap>
       </div>
 
